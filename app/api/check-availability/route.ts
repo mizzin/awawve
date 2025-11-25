@@ -21,6 +21,11 @@ const columnMap: Record<AvailabilityType, string> = {
   nickname: nicknameColumn,
 };
 
+interface CheckAvailabilityBody {
+  type: AvailabilityType;
+  value: string;
+}
+
 function normalize(value: string) {
   return value.trim();
 }
@@ -32,8 +37,9 @@ function availabilityMessage(type: AvailabilityType, available: boolean) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null);
-    const { type, value } = body ?? {};
+    const body = (await request.json().catch(() => null)) as CheckAvailabilityBody | null;
+    const type = body?.type;
+    const value = body?.value;
 
     if (type !== 'email' && type !== 'nickname') {
       return NextResponse.json({ message: '유효하지 않은 확인 타입입니다.' }, { status: 400 });
