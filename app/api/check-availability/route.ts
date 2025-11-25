@@ -41,12 +41,16 @@ function availabilityMessage(type: AvailabilityType, available: boolean) {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => null)) as CheckAvailabilityBody | null;
-    if (!body || !isAvailabilityType(body.type)) {
+    const body = (await request.json().catch(() => null)) as unknown;
+    const payload = (typeof body === 'object' && body !== null ? body : null) as
+      | Partial<CheckAvailabilityBody>
+      | null;
+
+    if (!payload || !isAvailabilityType(payload.type)) {
       return NextResponse.json({ message: '유효하지 않은 확인 타입입니다.' }, { status: 400 });
     }
 
-    const { type, value } = body;
+    const { type, value } = payload;
 
     if (typeof value !== 'string' || !value.trim()) {
       return NextResponse.json({ message: '확인할 값을 입력해주세요.' }, { status: 400 });
