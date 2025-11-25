@@ -26,6 +26,10 @@ interface CheckAvailabilityBody {
   value: string;
 }
 
+function isAvailabilityType(value: unknown): value is AvailabilityType {
+  return value === 'email' || value === 'nickname';
+}
+
 function normalize(value: string) {
   return value.trim();
 }
@@ -38,12 +42,12 @@ function availabilityMessage(type: AvailabilityType, available: boolean) {
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => null)) as CheckAvailabilityBody | null;
-    const type = body?.type;
-    const value = body?.value;
-
-    if (type !== 'email' && type !== 'nickname') {
+    if (!body || !isAvailabilityType(body.type)) {
       return NextResponse.json({ message: '유효하지 않은 확인 타입입니다.' }, { status: 400 });
     }
+
+    const { type, value } = body;
+
     if (typeof value !== 'string' || !value.trim()) {
       return NextResponse.json({ message: '확인할 값을 입력해주세요.' }, { status: 400 });
     }
