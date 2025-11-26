@@ -1,7 +1,7 @@
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import UserLayout from "@/app/layout/UserLayout"
-import { Button } from "@/components/ui/button"
 
+import { ProfileActions } from "../components/ProfileActions"
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 
 const myProfile: ProfileUser = {
@@ -34,28 +34,18 @@ const myFeeds: FeedCardData[] = [
 ]
 
 export default function MyProfilePage() {
+  const profileActions = [
+    { label: "✏️ 프로필 수정", message: "프로필 수정 준비 중입니다." },
+    { label: "🔒 비밀번호 변경", message: "비밀번호 변경 준비 중입니다." },
+    { label: "🚪 로그아웃", message: "로그아웃 되었습니다." },
+  ]
+
   return (
     <UserLayout>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 pb-24 pt-8">
         <ProfileHeader user={myProfile} showEmail />
 
-        <section className="grid gap-3">
-          {[
-            { label: "✏️ 프로필 수정", action: () => alert("프로필 수정 준비 중입니다.") },
-            { label: "🔒 비밀번호 변경", action: () => alert("비밀번호 변경 준비 중입니다.") },
-            { label: "🚪 로그아웃", action: () => alert("로그아웃 되었습니다.") },
-          ].map((item) => (
-            <Button
-              key={item.label}
-              type="button"
-              variant="outline"
-              className="justify-start rounded-2xl border-zinc-200 bg-white py-6 text-base font-medium text-zinc-700"
-              onClick={item.action}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </section>
+        <ProfileActions actions={profileActions} />
 
         <section className="space-y-4">
           <div>
