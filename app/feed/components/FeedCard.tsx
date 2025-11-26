@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { easeInOut, motion, type Transition } from "framer-motion"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
 type ReactionKey = "like" | "funny" | "dislike"
@@ -21,6 +22,7 @@ const reactionMeta: Record<
 const reactionOrder: ReactionKey[] = ["like", "funny", "dislike"]
 const wiggleAnimation = { rotate: [0, -10, 10, -6, 6, 0] }
 const wiggleTransition: Transition = { duration: 0.25, ease: easeInOut }
+const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 완료하고 함께 즐겨보세요 🌊"] as const
 
 export type FeedCardData = {
   id: number
@@ -48,6 +50,7 @@ type FeedCardProps = {
 
 export default function FeedCard({ feed, readOnly = false, onRequireAuth }: FeedCardProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [selectedReaction, setSelectedReaction] = useState<ReactionKey | null>(null)
   const storageKey = useMemo(() => `feed-reaction-${feed.id}`, [feed.id])
 
@@ -75,13 +78,26 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
     }
   }, [selectedReaction, storageKey, readOnly])
 
+  const notifyAuthRequired = useCallback(() => {
+    if (onRequireAuth) {
+      onRequireAuth()
+      return
+    }
+    const message = AUTH_MESSAGES[Math.floor(Math.random() * AUTH_MESSAGES.length)]
+    toast({
+      title: message,
+      duration: 3000,
+      className: "rounded-xl border border-zinc-100 bg-white text-gray-700 shadow-md",
+    })
+  }, [onRequireAuth, toast])
+
   const handleCardClick = useCallback(() => {
     if (readOnly) {
-      onRequireAuth?.()
+      notifyAuthRequired()
       return
     }
     router.push(`/feed/${feed.id}`)
-  }, [feed.id, onRequireAuth, readOnly, router])
+  }, [feed.id, notifyAuthRequired, readOnly, router])
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLElement>) => {
@@ -97,12 +113,20 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
     (reaction: ReactionKey) => (event: React.MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation()
       if (readOnly) {
-        onRequireAuth?.()
+        notifyAuthRequired()
         return
       }
-      setSelectedReaction((prev) => (prev === reaction ? null : reaction))
+      setSelectedReaction((prev) => {
+        const next = prev === reaction ? null : reaction
+        toast({
+          title: next ? `${reactionMeta[reaction].label} 반응을 남겼어요` : "반응을 취소했어요",
+          duration: 1800,
+          className: "rounded-xl border border-zinc-100 bg-white text-gray-700 shadow-md",
+        })
+        return next
+      })
     },
-    [onRequireAuth, readOnly]
+    [notifyAuthRequired, readOnly]
   )
 
   const commentCount = feed.commentCount ?? 0
