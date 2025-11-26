@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { motion, type Transition } from "framer-motion"
+import { easeInOut, motion, type Transition } from "framer-motion"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
@@ -20,7 +20,7 @@ const reactionMeta: Record<
 }
 const reactionOrder: ReactionKey[] = ["like", "funny", "dislike"]
 const wiggleAnimation = { rotate: [0, -10, 10, -6, 6, 0] }
-const wiggleTransition: Transition = { duration: 0.45, ease: [0.16, 1, 0.3, 1] }
+const wiggleTransition: Transition = { duration: 0.25, ease: easeInOut }
 
 export type FeedCardData = {
   id: number
