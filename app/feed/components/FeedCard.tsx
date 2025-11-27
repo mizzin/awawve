@@ -93,7 +93,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
         <ToastAction
           altText="로그인하기"
           onClick={() => router.push("/login")}
-          className="h-auto p-0 text-[#3182F6] font-semibold hover:underline"
+          className="h-auto border-none bg-transparent p-0 text-[#3182F6] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
         >
           로그인하기
         </ToastAction>
