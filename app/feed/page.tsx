@@ -12,61 +12,7 @@ import { cn } from "@/lib/utils"
 
 const TOAST_MESSAGES = ["로그인 후 파도에 함께 타보세요 🌊", "회원가입 후 좀 더 즐겨보세요 🌊"] as const
 
-const DUMMY_FEEDS: FeedCardData[] = [
-  {
-    id: 101,
-    author: {
-      nickname: "bgc_life",
-      handle: "@bgc_life",
-      avatarUrl: "https://i.pravatar.cc/120?img=32",
-    },
-    content: "금요일 퇴근길에 본 한강 노을, 물결 위에 분홍빛이 퍼지는 순간을 담아봤어요.",
-    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-    createdAt: "2025-02-15T10:00:00Z",
-    reactions: {
-      like: 15,
-      funny: 2,
-      dislike: 0,
-    },
-    commentCount: 8,
-  },
-  {
-    id: 102,
-    author: {
-      nickname: "saltbread",
-      handle: "@saltbread",
-      avatarUrl: "https://i.pravatar.cc/120?img=12",
-    },
-    content:
-      "부산에서 먹은 생멸치 회. 식감이 살짝 생소했지만 고소하고 담백해서 폭풍 흡입했어요. 바다 냄새가 그대로 느껴지는 맛!",
-    imageUrl: "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=600&q=80",
-    createdAt: "2025-02-14T12:30:00Z",
-    reactions: {
-      like: 32,
-      funny: 6,
-      dislike: 1,
-    },
-    commentCount: 12,
-  },
-  {
-    id: 103,
-    author: {
-      nickname: "weekendtrip",
-      handle: "@weekendtrip",
-      avatarUrl: "https://i.pravatar.cc/120?img=5",
-    },
-    content:
-      "도쿄 근교 하이킹 코스 추천 받을 수 있을까요? 이번 주말에 잠깐 다녀오려고요. 산책하기 좋은 루트 알려주세요!",
-    imageUrl: null,
-    createdAt: "2025-02-13T09:12:00Z",
-    reactions: {
-      like: 7,
-      funny: 1,
-      dislike: 0,
-    },
-    commentCount: 3,
-  },
-]
+const FEEDS: FeedCardData[] = []
 
 export default function FeedPage() {
   const router = useRouter()
@@ -99,6 +45,8 @@ export default function FeedPage() {
 
   const gatedButtonClass = cn(!isLoggedIn && "cursor-not-allowed")
 
+  const hasFeeds = FEEDS.length > 0
+
   return (
     <UserLayout>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 pb-28 ">
@@ -113,9 +61,16 @@ export default function FeedPage() {
         )}
 
         <section className="flex flex-col gap-6">
-          {DUMMY_FEEDS.map((feed) => (
-            <FeedCard key={feed.id} feed={feed} readOnly={!isLoggedIn} onRequireAuth={showAuthToast} />
-          ))}
+          {hasFeeds ? (
+            FEEDS.map((feed) => (
+              <FeedCard key={feed.id} feed={feed} readOnly={!isLoggedIn} onRequireAuth={showAuthToast} />
+            ))
+          ) : (
+            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-10 text-center text-sm text-zinc-500">
+              <p className="font-semibold text-zinc-700">존재하는 피드가 없습니다.</p>
+              <p className="mt-1 text-zinc-500">당신의 첫 피드로 파도를 채워주세요 🌊</p>
+            </div>
+          )}
         </section>
       </div>
     </UserLayout>
