@@ -36,10 +36,10 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth 
   return (
     <div className="min-h-screen bg-[var(--awave-bg)] text-[var(--awave-text)]">
       <header className="flex items-center justify-between border-b border-[var(--awave-border)] bg-[var(--awave-bg)] px-4 py-3">
-        <div className="flex items-baseline">
+        <Link href="/" className="flex items-baseline transition hover:text-[var(--awave-button)]">
           <span className="text-lg font-semibold text-[var(--awave-text)]">AWAVE</span>
           <span className="ml-1 text-sm text-[var(--awave-text-light)]">@beta</span>
-        </div>
+        </Link>
         <button
           type="button"
           aria-label="알림"
@@ -62,7 +62,7 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth 
                 href={item.href}
                 onClick={(event) => handleNavClick(event, item.href)}
                 className={`flex flex-col items-center transition ${
-                  isActive ? "text-[var(--awave-primary)]" : "text-[var(--awave-text-light)]"
+                  isActive ? "text-[var(--awave-button)]" : "text-[var(--awave-text-light)]"
                 }`}
               >
                 <Icon size={item.href === "/feed/new" ? 28 : 22} strokeWidth={1.8} />

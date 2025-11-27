@@ -60,7 +60,7 @@ export default function NotificationsPage() {
           <h1 className="text-2xl font-semibold text-[var(--awave-text)]">알림</h1>
           <button
             type="button"
-            className="text-sm font-medium text-[var(--awave-primary)] transition hover:opacity-80"
+            className="text-sm font-medium text-[var(--awave-button)] transition hover:opacity-80"
             onClick={() => alert("모든 알림을 읽음 처리합니다.")}
           >
             모두 읽음

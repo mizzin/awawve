@@ -37,7 +37,7 @@ export default function FeedPage() {
         <ToastAction
           altText="로그인하기"
           onClick={() => router.push("/login")}
-          className="h-auto border-none bg-transparent p-0 text-[var(--awave-primary)] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
+          className="h-auto border-none bg-transparent p-0 text-[var(--awave-button)] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
         >
           로그인하기
         </ToastAction>

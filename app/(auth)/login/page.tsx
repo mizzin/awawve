@@ -23,20 +23,53 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+
+  const checkEmailExists = async (emailToCheck: string) => {
+    const { data, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", emailToCheck)
+      .limit(1)
+      .single()
+
+    if (profileError) {
+      return null
+    }
+    return data ?? null
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setEmailError(null)
+    setPasswordError(null)
+
+    if (!isValidEmail(email)) {
+      setEmailError("등록되지 않은 이메일이에요.")
+      setLoading(false)
+      return
+    }
 
     try {
+      const existingProfile = await checkEmailExists(email)
+      if (!existingProfile) {
+        setEmailError("등록되지 않은 이메일이에요.")
+        setLoading(false)
+        return
+      }
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) {
-        setError(signInError.message)
+        setPasswordError("비밀번호를 다시 확인해 주세요.")
         setLoading(false)
         return
       }
@@ -69,6 +102,7 @@ export default function LoginPage() {
                 required
                 className="mt-1"
               />
+              {emailError && <p className="mt-1 text-sm text-red-600">{emailError}</p>}
             </div>
 
             <div>
@@ -82,18 +116,23 @@ export default function LoginPage() {
                 required
                 className="mt-1"
               />
+              {passwordError && <p className="mt-1 text-sm text-red-600">{passwordError}</p>}
             </div>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-[var(--awave-button)] hover:bg-[var(--awave-button)]/90"
+              disabled={loading}
+            >
               {loading ? "로그인 중…" : "로그인하기"}
             </Button>
           </form>
 
           <div className="mt-4 text-center text-sm text-[var(--awave-text-light)]">
             계정이 없다면{" "}
-            <a href="/signup" className="text-[var(--awave-primary)] hover:underline">
+            <a href="/signup" className="text-[var(--awave-button)] hover:underline">
               회원가입
             </a>
           </div>

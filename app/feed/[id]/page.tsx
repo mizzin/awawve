@@ -87,8 +87,8 @@ const reactionMeta: Record<
   ReactionKey,
   { label: string; emoji: string; activeColor: string; bg: string }
 > = {
-  like: { label: "좋아요", emoji: "😄", activeColor: "text-[var(--awave-primary)]", bg: "bg-[var(--awave-secondary)]" },
-  funny: { label: "ㅋㅋㅋ", emoji: "🤭", activeColor: "text-[var(--awave-text)]", bg: "bg-[var(--awave-secondary)]" },
+  like: { label: "좋아요", emoji: "😄", activeColor: "text-[var(--awave-button)]", bg: "bg-[var(--awave-secondary)]" },
+  funny: { label: "ㅋㅋㅋ", emoji: "🤭", activeColor: "text-[var(--awave-button)]", bg: "bg-[var(--awave-secondary)]" },
   dislike: { label: "별로야", emoji: "😐", activeColor: "text-[var(--awave-text-light)]", bg: "bg-[var(--awave-secondary)]" },
 }
 
@@ -182,7 +182,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
           <div className="relative" ref={menuRef}>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--awave-border)] text-[var(--awave-text-light)] transition hover:border-[var(--awave-primary)]/30"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--awave-border)] text-[var(--awave-text-light)] transition hover:border-[var(--awave-button)]/30"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-label="옵션 메뉴"
             >
@@ -242,7 +242,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
             )}
             {post.location && (
               <div className="flex items-center gap-2 text-sm text-[var(--awave-text-light)]">
-                <MapPin className="size-4 text-[var(--awave-primary)]" />
+            <MapPin className="size-4 text-[var(--awave-button)]" />
                 <span>{post.location.place_name}</span>
               </div>
             )}
@@ -278,7 +278,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
         <section className="mt-10 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-base font-semibold">댓글 {comments.length}개</p>
-            <Button variant="ghost" size="sm" className="text-[var(--awave-primary)]" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
+            <Button variant="ghost" size="sm" className="text-[var(--awave-button)]" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
               모두보기
             </Button>
           </div>

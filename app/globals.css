@@ -46,20 +46,21 @@
 :root {
   --radius: 0.75rem;
   /* AWAVE brand tokens */
-  --awave-primary: #1e2633;
+  --awave-brand: #1e2633;
+  --awave-button: #174484;
   --awave-secondary: #f1f4f8;
   --awave-bg: #ffffff;
   --awave-surface: #f1f4f8;
   --awave-text: #2c2f33;
   --awave-text-light: #8d9298;
-  --awave-border: #d8dde4;
+  --awave-border: #e2e6eb;
 
   /* System tokens mapped to AWAVE palette */
   --card: var(--awave-bg);
   --card-foreground: var(--awave-text);
   --popover: var(--awave-bg);
   --popover-foreground: var(--awave-text);
-  --primary: var(--awave-primary);
+  --primary: var(--awave-button);
   --primary-foreground: #ffffff;
   --secondary: var(--awave-secondary);
   --secondary-foreground: var(--awave-text);

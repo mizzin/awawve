@@ -2,12 +2,14 @@
 
 import React, { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
+import { useRouter } from "next/navigation"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
 
 type AvailabilityType = 'email' | 'nickname';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'duplicate' | 'error';
@@ -40,6 +42,8 @@ async function requestAvailability(type: AvailabilityType, value: string) {
 const steps = [1, 2, 3, 4];
 
 export default function SignupPage() {
+  const router = useRouter()
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -208,12 +212,23 @@ export default function SignupPage() {
 
   const handleSubmit = () => {
     if (regions.length < 1) {
-      alert('관심 지역을 최소 1개 이상 선택해주세요.');
+      toast({
+        title: "관심 지역을 최소 1개 이상 선택해주세요.",
+        duration: 2000,
+        className: "rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] text-[var(--awave-text)]",
+      })
       return;
     }
     const formData = { email, password, nickname, preferences, regions };
     console.log('회원가입 데이터:', formData);
-    alert('회원가입이 완료되었습니다!');
+    const nickLabel = nickname ? `@${nickname}` : "새로운 파도"
+    toast({
+      title: "회원가입이 완료되었습니다!",
+      description: `${nickLabel} 님, 로그인해 주세요.`,
+      duration: 1800,
+      className: "rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] text-[var(--awave-text)]",
+    })
+    setTimeout(() => router.push("/login"), 1800)
   };
 
   return (
@@ -226,7 +241,7 @@ export default function SignupPage() {
               <div
                 key={step}
                 className={`h-3 w-3 rounded-full ${
-                  step === currentStep ? "bg-[var(--awave-primary)]" : "bg-[var(--awave-secondary)]"
+                  step === currentStep ? "bg-[var(--awave-button)]" : "bg-[var(--awave-secondary)]"
                 }`}
               />
             ))}
@@ -243,7 +258,7 @@ export default function SignupPage() {
             >
               {currentStep === 1 && (
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">1단계: 이메일 입력</h2>
+                  <h2 className="text-xl font-semibold mb-4">이메일 입력</h2>
                   <Label htmlFor="email">이메일 주소</Label>
                   <Input
                     id="email"
@@ -255,7 +270,7 @@ export default function SignupPage() {
                   />
                   <div className="mt-3 rounded-lg border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-3 text-sm text-[var(--awave-text)] leading-relaxed">
                     <p className="font-medium">이메일은 계정을 찾는 열쇠예요.</p>
-                    <p className="mt-1">
+                    <p className="mt-1 text-xs">
                       비밀번호 찾기 등 필수 알림에만 사용하며, 마케팅 목적이나 광고 발송에는 절대 활용하지 않습니다.
                     </p>
                   </div>
@@ -283,7 +298,7 @@ export default function SignupPage() {
 
               {currentStep === 2 && (
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">2단계: 비밀번호 설정</h2>
+                  <h2 className="text-xl font-semibold mb-4">비밀번호 설정</h2>
                   <Label htmlFor="password">비밀번호</Label>
                   <Input
                     id="password"
@@ -306,7 +321,7 @@ export default function SignupPage() {
                   />
                   <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900 leading-relaxed">
                     <p className="font-medium">안전한 비밀번호를 만들어주세요.</p>
-                    <p className="mt-1">
+                    <p className="mt-1 text-xs">
                       영문과 숫자를 모두 포함해 8~16자로 설정하고 두 입력값이 정확히 일치해야 합니다.
                     </p>
                   </div>
@@ -324,7 +339,7 @@ export default function SignupPage() {
 
               {currentStep === 3 && (
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">3단계: 닉네임 입력</h2>
+                  <h2 className="text-xl font-semibold mb-4">닉네임 입력</h2>
                   <Label htmlFor="nickname">닉네임</Label>
                   <Input
                     id="nickname"
@@ -336,8 +351,8 @@ export default function SignupPage() {
                   />
                   <div className="mt-3 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 leading-relaxed">
                     <p className="font-medium">닉네임 규칙 안내</p>
-                    <p className="mt-1">한글, 영문 대소문자, 숫자, 언더바(_)만 사용해 2~12자로 만들어주세요.</p>
-                    <p className="mt-1">모든 닉네임은 고유해야 하므로 중복 확인을 완료해야 합니다.</p>
+                    <p className="mt-1 text-xs">- 한글, 영문 대소문자, 숫자, 언더바(_)만 사용해 2~12자로 만들어주세요.</p>
+                    <p className="mt-1 text-xs">- 모든 닉네임은 고유해야 하므로 중복 확인을 완료해야 합니다.</p>
                   </div>
                   <Button
                     variant="outline"
@@ -368,7 +383,7 @@ export default function SignupPage() {
 
               {currentStep === 4 && (
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">4단계: 취향 및 지역 선택</h2>
+                  <h2 className="text-xl font-semibold mb-4">취향 및 지역 선택</h2>
                   <div>
                     <p className="font-medium">취향 선택 (최대 5개)</p>
                     <div className="flex flex-wrap gap-2 mt-2">

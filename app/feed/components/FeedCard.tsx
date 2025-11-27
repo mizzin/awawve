@@ -16,8 +16,8 @@ const reactionMeta: Record<
   ReactionKey,
   { emoji: string; label: string; activeColor: string; idleColor: string }
 > = {
-  like: { emoji: "😄", label: "좋아요", activeColor: "text-[var(--awave-primary)]", idleColor: "text-[var(--awave-text-light)]" },
-  funny: { emoji: "🤭", label: "ㅋㅋㅋ", activeColor: "text-[var(--awave-text)]", idleColor: "text-[var(--awave-text-light)]" },
+  like: { emoji: "😄", label: "좋아요", activeColor: "text-[var(--awave-button)]", idleColor: "text-[var(--awave-text-light)]" },
+  funny: { emoji: "🤭", label: "ㅋㅋㅋ", activeColor: "text-[var(--awave-button)]", idleColor: "text-[var(--awave-text-light)]" },
   dislike: { emoji: "😐", label: "별로야", activeColor: "text-[var(--awave-text-light)]", idleColor: "text-[var(--awave-text-light)]" },
 }
 const reactionOrder: ReactionKey[] = ["like", "funny", "dislike"]
@@ -94,7 +94,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
         <ToastAction
           altText="로그인하기"
           onClick={() => router.push("/login")}
-          className="h-auto border-none bg-transparent p-0 text-[var(--awave-primary)] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
+          className="h-auto border-none bg-transparent p-0 text-[var(--awave-button)] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
         >
           로그인하기
         </ToastAction>
@@ -151,7 +151,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "rounded-xl border border-[var(--awave-border)] bg-white p-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--awave-primary)]/20",
+        "rounded-xl border border-[var(--awave-border)] bg-white p-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--awave-button)]/20",
         readOnly ? "cursor-not-allowed opacity-90" : "cursor-pointer hover:shadow-md"
       )}
     >
