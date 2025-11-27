@@ -38,7 +38,7 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth 
       <header className="flex items-center justify-between border-b border-zinc-100 bg-white px-4 py-3">
         <div className="flex items-baseline">
           <span className="text-lg font-semibold text-zinc-900">AWAVE</span>
-          <span className="ml-1 text-sm text-zinc-400">@now</span>
+          <span className="ml-1 text-sm text-zinc-400">@beta</span>
         </div>
         <button
           type="button"

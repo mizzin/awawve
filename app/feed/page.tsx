@@ -31,10 +31,14 @@ export default function FeedPage() {
     toast({
       title: message,
       duration: 3000,
-      className: "cursor-pointer rounded-xl border border-zinc-100 bg-white text-gray-700 shadow-md",
+      className: "cursor-pointer rounded-xl border border-zinc-100 bg-white pr-12 text-gray-700 shadow-md",
       action: (
-        <ToastAction altText="로그인 하러가기" onClick={() => router.push("/login")}>
-          로그인 하러가기
+        <ToastAction
+          altText="로그인하기"
+          onClick={() => router.push("/login")}
+          className="h-auto p-0 text-[#3182F6] font-semibold hover:underline"
+        >
+          로그인하기
         </ToastAction>
       ),
     })
