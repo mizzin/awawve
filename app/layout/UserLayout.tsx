@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import type { ReactNode } from "react"
+import type { MouseEvent, ReactNode } from "react"
 import { Bell, Home, PlusCircle, UserRound } from "lucide-react"
 
 type UserLayoutProps = {
   children: ReactNode
+  isLoggedIn?: boolean
+  onRequireAuth?: () => void
 }
 
 const navItems = [
@@ -20,8 +22,16 @@ const navItems = [
   { href: "/profile/me", label: "프로필", icon: UserRound, match: (path: string) => path.startsWith("/profile") },
 ]
 
-export default function UserLayout({ children }: UserLayoutProps) {
+export default function UserLayout({ children, isLoggedIn = true, onRequireAuth }: UserLayoutProps) {
   const pathname = usePathname()
+
+  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    const requiresAuth = href === "/feed/new" || href.startsWith("/profile")
+    if (!isLoggedIn && requiresAuth) {
+      event.preventDefault()
+      onRequireAuth?.()
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white text-[#333]">
@@ -50,6 +60,7 @@ export default function UserLayout({ children }: UserLayoutProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(event) => handleNavClick(event, item.href)}
                 className={`flex flex-col items-center transition ${isActive ? "text-[#3182F6]" : "text-gray-500"}`}
               >
                 <Icon size={item.href === "/feed/new" ? 28 : 22} strokeWidth={1.8} />

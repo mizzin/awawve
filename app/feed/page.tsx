@@ -7,6 +7,7 @@ import { Pencil } from "lucide-react"
 import UserLayout from "@/app/layout/UserLayout"
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import { Button } from "@/components/ui/button"
+import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
@@ -31,7 +32,11 @@ export default function FeedPage() {
       title: message,
       duration: 3000,
       className: "cursor-pointer rounded-xl border border-zinc-100 bg-white text-gray-700 shadow-md",
-      onClick: () => router.push("/login"),
+      action: (
+        <ToastAction altText="로그인 하러가기" onClick={() => router.push("/login")}>
+          로그인 하러가기
+        </ToastAction>
+      ),
     })
   }, [router, toast])
 
@@ -48,7 +53,7 @@ export default function FeedPage() {
   const hasFeeds = FEEDS.length > 0
 
   return (
-    <UserLayout>
+    <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={showAuthToast}>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 pb-28 ">
         <header className="flex items-start justify-between">
        

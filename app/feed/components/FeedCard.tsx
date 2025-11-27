@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { easeInOut, motion, type Transition } from "framer-motion"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
@@ -88,8 +89,13 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
       title: message,
       duration: 3000,
       className: "rounded-xl border border-zinc-100 bg-white text-gray-700 shadow-md",
+      action: (
+        <ToastAction altText="로그인 하러가기" onClick={() => router.push("/login")}>
+          로그인 하러가기
+        </ToastAction>
+      ),
     })
-  }, [onRequireAuth, toast])
+  }, [onRequireAuth, router, toast])
 
   const handleCardClick = useCallback(() => {
     if (readOnly) {
