@@ -54,16 +54,16 @@ export default function LoginPage() {
     <UserLayout isLoggedIn={false}>
       <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center justify-center px-4 pb-24 pt-8">
         <Card className="w-full p-6">
-          <h2 className="mb-1 text-2xl font-semibold">Sign in</h2>
-          <p className="mb-6 text-sm text-gray-500">Use your account to continue</p>
+          <h2 className="mb-1 text-2xl font-semibold">로그인</h2>
+          <p className="mb-6 text-sm text-gray-500">로그인 후 계속 awave를 즐겨보세요.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">이메일</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@company.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -72,7 +72,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">비밀번호</Label>
               <Input
                 id="password"
                 type="password"
@@ -87,14 +87,14 @@ export default function LoginPage() {
             {error && <p className="text-sm text-red-600">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in…" : "Sign in"}
+              {loading ? "로그인 중…" : "로그인하기"}
             </Button>
           </form>
 
           <div className="mt-4 text-center text-sm text-gray-500">
-            Don’t have an account?{" "}
+            계정이 없다면{" "}
             <a href="/signup" className="text-blue-600 hover:underline">
-              Create one
+              회원가입
             </a>
           </div>
         </Card>
