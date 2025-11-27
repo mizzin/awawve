@@ -1,11 +1,13 @@
-'use client';
+"use client"
 
-import React, { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+
+import UserLayout from "@/app/layout/UserLayout"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 type AvailabilityType = 'email' | 'nickname';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'duplicate' | 'error';
@@ -215,16 +217,16 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start bg-gray-50 pt-10 sm:pt-20 overflow-hidden">
-      <div className="relative w-full max-w-md">
-        <Card className="p-6 space-y-6">
+    <UserLayout isLoggedIn={false}>
+      <div className="relative mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md flex-col items-center justify-start overflow-hidden bg-[var(--awave-bg)] px-4 pb-24 pt-10 sm:pt-16">
+        <Card className="w-full space-y-6 p-6">
           {/* Step Indicator */}
           <div className="flex justify-center space-x-4">
             {steps.map((step) => (
               <div
                 key={step}
                 className={`h-3 w-3 rounded-full ${
-                  step === currentStep ? 'bg-blue-500' : 'bg-gray-300'
+                  step === currentStep ? "bg-[var(--awave-primary)]" : "bg-[var(--awave-secondary)]"
                 }`}
               />
             ))}
@@ -251,7 +253,7 @@ export default function SignupPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="mt-1"
                   />
-                  <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900 leading-relaxed">
+                  <div className="mt-3 rounded-lg border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-3 text-sm text-[var(--awave-text)] leading-relaxed">
                     <p className="font-medium">이메일은 계정을 찾는 열쇠예요.</p>
                     <p className="mt-1">
                       비밀번호 찾기 등 필수 알림에만 사용하며, 마케팅 목적이나 광고 발송에는 절대 활용하지 않습니다.
@@ -409,6 +411,6 @@ export default function SignupPage() {
           </AnimatePresence>
         </Card>
       </div>
-    </main>
-  );
+    </UserLayout>
+  )
 }

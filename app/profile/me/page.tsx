@@ -21,12 +21,13 @@ export default function MyProfilePage() {
     toast({
       title: message,
       duration: 3000,
-      className: "rounded-xl border border-zinc-100 bg-white pr-12 text-gray-700 shadow-md",
+      className:
+        "rounded-xl border border-[var(--awave-border)] bg-white pr-12 text-[var(--awave-text)] shadow-md",
       action: (
         <ToastAction
           altText="로그인하기"
           onClick={() => router.push("/login")}
-          className="h-auto border-none bg-transparent p-0 text-[#3182F6] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
+          className="h-auto border-none bg-transparent p-0 text-[var(--awave-primary)] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
         >
           로그인하기
         </ToastAction>
@@ -42,9 +43,9 @@ export default function MyProfilePage() {
         {profileUser ? (
           <ProfileHeader user={profileUser} showEmail />
         ) : (
-          <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-10 text-center text-sm text-zinc-500">
-            <p className="font-semibold text-zinc-700">프로필 정보가 없습니다.</p>
-            <p className="mt-1 text-zinc-500">로그인 후 프로필을 채워주세요.</p>
+          <div className="rounded-xl border border-dashed border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">
+            <p className="font-semibold text-[var(--awave-text)]">프로필 정보가 없습니다.</p>
+            <p className="mt-1 text-[var(--awave-text-light)]">로그인 후 프로필을 채워주세요.</p>
           </div>
         )}
 
@@ -52,8 +53,8 @@ export default function MyProfilePage() {
 
         <section className="space-y-4">
           <div>
-            <p className="text-lg font-semibold text-zinc-900">작성한 글</p>
-            <p className="text-sm text-zinc-400">내가 쓴 피드를 모아서 볼 수 있어요.</p>
+            <p className="text-lg font-semibold text-[var(--awave-text)]">작성한 글</p>
+            <p className="text-sm text-[var(--awave-text-light)]">내가 쓴 피드를 모아서 볼 수 있어요.</p>
           </div>
           {profileFeeds.length > 0 ? (
             <div className="space-y-4">
@@ -62,9 +63,9 @@ export default function MyProfilePage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-              <p className="font-semibold text-zinc-700">작성한 피드가 없습니다.</p>
-              <p className="mt-1 text-zinc-500">첫 피드를 남겨주세요.</p>
+            <div className="rounded-xl border border-dashed border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-8 text-center text-sm text-[var(--awave-text-light)]">
+              <p className="font-semibold text-[var(--awave-text)]">작성한 피드가 없습니다.</p>
+              <p className="mt-1 text-[var(--awave-text-light)]">첫 피드를 남겨주세요.</p>
             </div>
           )}
         </section>

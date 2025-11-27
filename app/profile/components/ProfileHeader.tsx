@@ -20,23 +20,21 @@ export function ProfileHeader({ user, showEmail, rightSlot }: ProfileHeaderProps
   const tags = user.preferences.slice(0, 5)
 
   return (
-    <section className="rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-[var(--awave-border)] bg-white p-6 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="size-[72px]">
             {user.avatarUrl ? (
               <AvatarImage src={user.avatarUrl} alt={user.nickname} className="object-cover" />
             ) : (
-              <AvatarFallback className="bg-gradient-to-br from-indigo-200 to-sky-100 text-xl font-semibold text-zinc-700">
+              <AvatarFallback className="bg-[var(--awave-secondary)] text-xl font-semibold text-[var(--awave-text)]">
                 {user.nickname.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             )}
           </Avatar>
           <div className="space-y-1">
-            <p className="text-xl font-semibold text-zinc-900">@{user.nickname}</p>
-            {showEmail && user.email ? (
-              <p className="text-sm text-zinc-400">{user.email}</p>
-            ) : null}
+            <p className="text-xl font-semibold text-[var(--awave-text)]">@{user.nickname}</p>
+            {showEmail && user.email ? <p className="text-sm text-[var(--awave-text-light)]">{user.email}</p> : null}
           </div>
         </div>
         {rightSlot}
@@ -47,7 +45,7 @@ export function ProfileHeader({ user, showEmail, rightSlot }: ProfileHeaderProps
           {tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-[#E9F2FF] px-3 py-1 text-sm font-medium text-[#3182F6]"
+              className="rounded-full bg-[var(--awave-secondary)] px-3 py-1 text-sm font-medium text-[var(--awave-primary)]"
             >
               #{tag}
             </span>

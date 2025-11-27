@@ -34,16 +34,16 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth 
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#333]">
-      <header className="flex items-center justify-between border-b border-zinc-100 bg-white px-4 py-3">
+    <div className="min-h-screen bg-[var(--awave-bg)] text-[var(--awave-text)]">
+      <header className="flex items-center justify-between border-b border-[var(--awave-border)] bg-[var(--awave-bg)] px-4 py-3">
         <div className="flex items-baseline">
-          <span className="text-lg font-semibold text-zinc-900">AWAVE</span>
-          <span className="ml-1 text-sm text-zinc-400">@beta</span>
+          <span className="text-lg font-semibold text-[var(--awave-text)]">AWAVE</span>
+          <span className="ml-1 text-sm text-[var(--awave-text-light)]">@beta</span>
         </div>
         <button
           type="button"
           aria-label="알림"
-          className="inline-flex items-center justify-center rounded-full p-1 text-zinc-400 transition hover:text-zinc-600"
+          className="inline-flex items-center justify-center rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)]"
         >
           <Bell className="size-5" />
         </button>
@@ -51,7 +51,7 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth 
 
       <main className="pb-24">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 border-t border-zinc-100 bg-white/95 px-6 py-2 text-sm text-gray-500 backdrop-blur">
+      <nav className="fixed inset-x-0 bottom-0 border-t border-[var(--awave-border)] bg-white/95 px-6 py-2 text-sm text-[var(--awave-text-light)] backdrop-blur">
         <div className="mx-auto flex max-w-xl items-center justify-around">
           {navItems.map((item) => {
             const Icon = item.icon
@@ -61,7 +61,9 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth 
                 key={item.href}
                 href={item.href}
                 onClick={(event) => handleNavClick(event, item.href)}
-                className={`flex flex-col items-center transition ${isActive ? "text-[#3182F6]" : "text-gray-500"}`}
+                className={`flex flex-col items-center transition ${
+                  isActive ? "text-[var(--awave-primary)]" : "text-[var(--awave-text-light)]"
+                }`}
               >
                 <Icon size={item.href === "/feed/new" ? 28 : 22} strokeWidth={1.8} />
                 <span className="mt-1 text-xs">{item.label}</span>

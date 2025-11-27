@@ -19,7 +19,7 @@ export function ProfileActions({ actions }: ProfileActionsProps) {
           key={item.label}
           type="button"
           variant="outline"
-          className="justify-start rounded-2xl border-zinc-200 bg-white py-6 text-base font-medium text-zinc-700"
+          className="justify-start rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)] hover:bg-[var(--awave-secondary)]"
           onClick={() => alert(item.message)}
         >
           {item.label}

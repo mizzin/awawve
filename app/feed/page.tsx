@@ -31,12 +31,13 @@ export default function FeedPage() {
     toast({
       title: message,
       duration: 3000,
-      className: "cursor-pointer rounded-xl border border-zinc-100 bg-white pr-12 text-gray-700 shadow-md",
+      className:
+        "cursor-pointer rounded-xl border border-[var(--awave-border)] bg-white pr-12 text-[var(--awave-text)] shadow-md",
       action: (
         <ToastAction
           altText="로그인하기"
           onClick={() => router.push("/login")}
-          className="h-auto border-none bg-transparent p-0 text-[#3182F6] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
+          className="h-auto border-none bg-transparent p-0 text-[var(--awave-primary)] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
         >
           로그인하기
         </ToastAction>
@@ -64,7 +65,7 @@ export default function FeedPage() {
         </header>
 
         {!isLoggedIn && (
-          <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-3 text-xs text-zinc-500">
+          <div className="rounded-xl bg-[var(--awave-secondary)] px-4 py-3 text-xs text-[var(--awave-text-light)]">
             비로그인 사용자는 읽기 전용 모드로 제공돼요.
           </div>
         )}
@@ -75,9 +76,9 @@ export default function FeedPage() {
               <FeedCard key={feed.id} feed={feed} readOnly={!isLoggedIn} onRequireAuth={showAuthToast} />
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-10 text-center text-sm text-zinc-500">
-              <p className="font-semibold text-zinc-700">존재하는 피드가 없습니다.</p>
-              <p className="mt-1 text-zinc-500">당신의 첫 피드로 파도를 채워주세요 🌊</p>
+            <div className="rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">
+              <p className="font-semibold text-[var(--awave-text)]">존재하는 피드가 없습니다.</p>
+              <p className="mt-1 text-[var(--awave-text-light)]">당신의 첫 피드로 파도를 채워주세요 🌊</p>
             </div>
           )}
         </section>

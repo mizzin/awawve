@@ -186,19 +186,19 @@ export default function NewFeedPage() {
 
   return (
     <UserLayout>
-      <div className="min-h-screen bg-white text-zinc-900">
+      <div className="min-h-screen bg-white text-[var(--awave-text)]">
         <form
           onSubmit={handleSubmit}
           className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 pb-48 pt-8 font-sans"
         >
-        <section className="space-y-2">
-          <p className="text-sm font-semibold text-zinc-400">NOW</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
-            지금 어떤 순간인가요?
-          </h1>
-        </section>
+          <section className="space-y-2">
+            <p className="text-sm font-semibold text-[var(--awave-text-light)]">NOW</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--awave-text)]">
+              지금 어떤 순간인가요?
+            </h1>
+          </section>
 
-        <section className="mt-6 rounded-3xl border border-transparent bg-zinc-50/60 p-4 shadow-[0_6px_40px_-32px_rgba(0,0,0,0.45)]">
+        <section className="mt-6 rounded-xl border border-transparent bg-[var(--awave-secondary)] p-4 shadow-[0_6px_40px_-32px_rgba(0,0,0,0.45)]">
           <div className="relative">
             <textarea
               ref={textareaRef}
@@ -207,12 +207,12 @@ export default function NewFeedPage() {
               maxLength={MAX_CHAR_COUNT}
               onChange={handleBodyChange}
               placeholder="무슨 생각해요?"
-              className="w-full resize-none bg-transparent text-lg leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
+              className="w-full resize-none bg-transparent text-lg leading-relaxed text-[var(--awave-text)] placeholder:text-[var(--awave-text-light)] focus:outline-none"
             />
             <span
               className={cn(
                 "absolute bottom-0 right-0 text-xs font-medium transition-colors",
-                remainingCount <= 20 ? "text-blue-600" : "text-zinc-400"
+                remainingCount <= 20 ? "text-[var(--awave-primary)]" : "text-[var(--awave-text-light)]"
               )}
             >
               {remainingCount}
@@ -222,21 +222,21 @@ export default function NewFeedPage() {
 
         <section className="mt-8 space-y-4">
           <div>
-            <p className="text-sm font-medium text-zinc-500">이미지 업로드 (선택)</p>
-            <p className="text-xs text-zinc-400">최대 1장, JPG 또는 PNG</p>
+            <p className="text-sm font-medium text-[var(--awave-text-light)]">이미지 업로드 (선택)</p>
+            <p className="text-xs text-[var(--awave-text-light)]">최대 1장, JPG 또는 PNG</p>
           </div>
 
           {!media && (
             <label
               htmlFor="media-upload"
-              className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-zinc-200 bg-white px-6 py-10 text-center text-sm text-zinc-500 transition hover:border-zinc-300 hover:bg-zinc-50"
+              className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--awave-border)] bg-white px-6 py-10 text-center text-sm text-[var(--awave-text-light)] transition hover:border-[var(--awave-primary)]/30 hover:bg-[var(--awave-secondary)]"
             >
-              <div className="flex size-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+              <div className="flex size-12 items-center justify-center rounded-full bg-[var(--awave-secondary)] text-[var(--awave-primary)]">
                 <ImageIcon className="size-5" />
               </div>
               <div>
-                <p className="font-medium text-zinc-800">이미지 첨부하기</p>
-                <p className="text-xs text-zinc-400">드래그 & 드롭 또는 클릭</p>
+                <p className="font-medium text-[var(--awave-text)]">이미지 첨부하기</p>
+                <p className="text-xs text-[var(--awave-text-light)]">드래그 & 드롭 또는 클릭</p>
               </div>
               <input
                 id="media-upload"
@@ -249,7 +249,7 @@ export default function NewFeedPage() {
           )}
 
           {media && (
-            <div className="relative overflow-hidden rounded-2xl border border-zinc-100">
+            <div className="relative overflow-hidden rounded-xl border border-[var(--awave-border)]">
               <div className="relative h-64 w-full">
                 <Image
                   src={media.preview}
@@ -274,12 +274,12 @@ export default function NewFeedPage() {
 
         <section className="mt-8 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-zinc-500">취향 태그 (선택)</p>
+            <p className="text-sm font-medium text-[var(--awave-text-light)]">취향 태그 (선택)</p>
             {selectedTag && (
               <button
                 type="button"
                 onClick={() => setSelectedTag(null)}
-                className="text-xs font-medium text-blue-600"
+                className="text-xs font-medium text-[var(--awave-primary)]"
               >
                 선택 해제
               </button>
@@ -296,8 +296,8 @@ export default function NewFeedPage() {
                   className={cn(
                     "rounded-full border px-4 py-2 text-sm font-medium transition",
                     isActive
-                      ? "border-blue-500 bg-blue-500 text-white shadow-sm"
-                      : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
+                      ? "border-[var(--awave-primary)] bg-[var(--awave-primary)] text-white shadow-sm"
+                      : "border-[var(--awave-border)] bg-white text-[var(--awave-text)] hover:border-[var(--awave-primary)]/40"
                   )}
                 >
                   {tag}
@@ -309,12 +309,12 @@ export default function NewFeedPage() {
 
         <section className="mt-8 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-zinc-500">위치 추가 (선택)</p>
+            <p className="text-sm font-medium text-[var(--awave-text-light)]">위치 추가 (선택)</p>
             {location ? (
               <button
                 type="button"
                 onClick={() => setLocation(null)}
-                className="text-xs font-medium text-zinc-400"
+                className="text-xs font-medium text-[var(--awave-text-light)]"
               >
                 제거
               </button>
@@ -323,22 +323,22 @@ export default function NewFeedPage() {
           <Button
             type="button"
             variant="outline"
-            className="justify-start gap-2 rounded-2xl border-zinc-200 bg-white py-6 text-base font-medium text-zinc-700"
+            className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
             onClick={() => setIsLocationModalOpen(true)}
           >
-            <MapPin className="size-5 text-blue-600" />
+            <MapPin className="size-5 text-[var(--awave-primary)]" />
             장소 추가
           </Button>
 
           {location && (
-            <div className="space-y-3 rounded-2xl border border-zinc-100 bg-zinc-50/80 p-4">
+            <div className="space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-base font-semibold text-zinc-900">
+                  <p className="text-base font-semibold text-[var(--awave-text)]">
                     {location.placeName}
                   </p>
-                  <p className="text-sm text-zinc-500">{location.address}</p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-sm text-[var(--awave-text-light)]">{location.address}</p>
+                  <p className="text-xs text-[var(--awave-text-light)]">
                     {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
                   </p>
                 </div>
@@ -346,13 +346,13 @@ export default function NewFeedPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="text-zinc-400 hover:text-zinc-700"
+                  className="text-[var(--awave-text-light)] hover:text-[var(--awave-text)]"
                   onClick={() => setLocation(null)}
                 >
                   <X className="size-4" />
                 </Button>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-zinc-100">
+              <div className="overflow-hidden rounded-xl border border-[var(--awave-border)]">
                 <iframe
                   title="선택한 위치 미리보기"
                   src={`https://www.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
@@ -365,15 +365,15 @@ export default function NewFeedPage() {
           )}
         </section>
 
-        <div className="mt-12 text-xs text-zinc-400">
+        <div className="mt-12 text-xs text-[var(--awave-text-light)]">
           사진, 태그, 위치는 모두 선택 사항이에요. 본문만으로도 바로 등록할 수 있어요.
         </div>
 
-        <div className="fixed inset-x-0 bottom-20 border border-zinc-100 bg-white/95 px-5 py-4 shadow-lg sm:bottom-24">
+        <div className="fixed inset-x-0 bottom-20 border border-[var(--awave-border)] bg-white/95 px-5 py-4 shadow-lg sm:bottom-24">
           <Button
             type="submit"
             disabled={!canSubmit}
-            className="w-full rounded-2xl bg-blue-600 py-6 text-base font-semibold text-white shadow-lg transition hover:bg-blue-500 disabled:bg-zinc-300"
+            className="w-full rounded-xl bg-[var(--awave-primary)] py-6 text-base font-semibold text-white shadow-lg transition hover:opacity-90 disabled:bg-[var(--awave-text-light)]"
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
@@ -454,18 +454,18 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
         onClick={onClose}
       />
       <div
-        className="relative rounded-t-3xl bg-white px-5 pb-8 pt-5 shadow-[0_-4px_40px_rgba(0,0,0,0.12)]"
+        className="relative rounded-t-xl bg-white px-5 pb-8 pt-5 shadow-[0_-4px_40px_rgba(0,0,0,0.12)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-base font-semibold text-zinc-900">장소 추가</p>
-            <p className="text-xs text-zinc-400">검색하거나 지도를 눌러 핀을 찍을 수 있어요.</p>
+            <p className="text-base font-semibold text-[var(--awave-text)]">장소 추가</p>
+            <p className="text-xs text-[var(--awave-text-light)]">검색하거나 지도를 눌러 핀을 찍을 수 있어요.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex size-8 items-center justify-center rounded-full bg-zinc-100 text-zinc-500"
+            className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--awave-secondary)] text-[var(--awave-text-light)]"
             aria-label="닫기"
           >
             <X className="size-4" />
@@ -473,25 +473,25 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
         </div>
 
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--awave-text-light)]" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="장소를 검색해보세요"
-            className="w-full rounded-2xl border-zinc-200 bg-zinc-50 pl-10 pr-4 text-sm text-zinc-700"
+            className="w-full rounded-xl border-[var(--awave-border)] bg-[var(--awave-secondary)] pl-10 pr-4 text-sm text-[var(--awave-text)]"
           />
         </div>
 
         <div className="mt-5 space-y-3">
           <div
             onClick={handleMapClick}
-            className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-zinc-100 bg-[radial-gradient(circle_at_top,_#e2e8f0,_#f8fafc_60%)]"
+            className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]"
           >
-            <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(255,255,255,0.2),rgba(255,255,255,0.55))]" />
-            <p className="relative z-10 text-sm font-medium text-zinc-500">터치해서 핀 놓기</p>
+            <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(255,255,255,0.2),rgba(255,255,255,0.6))]" />
+            <p className="relative z-10 text-sm font-medium text-[var(--awave-text-light)]">터치해서 핀 놓기</p>
             {pinPosition && (
               <MapPin
-                className="absolute -translate-x-1/2 -translate-y-full text-blue-600 drop-shadow-md"
+                className="absolute -translate-x-1/2 -translate-y-full text-[var(--awave-primary)] drop-shadow-md"
                 style={{
                   left: `${pinPosition.x * 100}%`,
                   top: `${pinPosition.y * 100}%`,
@@ -500,18 +500,18 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
             )}
           </div>
           {pinLocation && (
-            <div className="rounded-2xl bg-zinc-50/80 p-3 text-sm text-zinc-600">
+            <div className="rounded-xl bg-[var(--awave-secondary)] p-3 text-sm text-[var(--awave-text)]">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-zinc-900">{pinLocation.placeName}</p>
-                  <p className="text-xs text-zinc-400">
+                  <p className="font-semibold text-[var(--awave-text)]">{pinLocation.placeName}</p>
+                  <p className="text-xs text-[var(--awave-text-light)]">
                     {pinLocation.lat.toFixed(4)}, {pinLocation.lng.toFixed(4)}
                   </p>
                 </div>
                 <Button
                   type="button"
                   size="sm"
-                  className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white"
+                  className="rounded-full bg-[var(--awave-primary)] px-4 py-2 text-xs font-semibold text-white"
                   onClick={() => {
                     onSelect(pinLocation)
                     onClose()
@@ -525,12 +525,12 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
         </div>
 
         <div className="mt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--awave-text-light)]">
             추천 장소
           </p>
           <div className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
             {filteredPlaces.length === 0 && (
-              <p className="rounded-2xl border border-dashed border-zinc-200 px-4 py-6 text-center text-sm text-zinc-400">
+              <p className="rounded-xl border border-dashed border-[var(--awave-border)] px-4 py-6 text-center text-sm text-[var(--awave-text-light)]">
                 검색 결과가 없어요.
               </p>
             )}
@@ -538,18 +538,18 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
               <button
                 key={place.placeName}
                 type="button"
-                className="flex w-full items-center gap-3 rounded-2xl border border-zinc-100 px-4 py-3 text-left transition hover:border-blue-100 hover:bg-blue-50/50"
+                className="flex w-full items-center gap-3 rounded-xl border border-[var(--awave-border)] px-4 py-3 text-left transition hover:border-[var(--awave-primary)]/30 hover:bg-[var(--awave-secondary)]"
                 onClick={() => {
                   onSelect(place)
                   onClose()
                 }}
               >
-                <div className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--awave-secondary)] text-[var(--awave-primary)]">
                   <MapPin className="size-4" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-zinc-900">{place.placeName}</p>
-                  <p className="text-xs text-zinc-500">{place.address}</p>
+                  <p className="text-sm font-semibold text-[var(--awave-text)]">{place.placeName}</p>
+                  <p className="text-xs text-[var(--awave-text-light)]">{place.address}</p>
                 </div>
               </button>
             ))}

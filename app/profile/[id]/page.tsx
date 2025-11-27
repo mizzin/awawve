@@ -69,17 +69,17 @@ export default function OtherProfilePage() {
                 type="button"
                 size="icon"
                 variant="outline"
-                className="rounded-full border-zinc-200"
+                className="rounded-full border-[var(--awave-border)]"
                 onClick={() => setMenuOpen((prev) => !prev)}
                 aria-label="프로필 옵션"
               >
                 ⋯
               </Button>
               {menuOpen && (
-                <div className="absolute right-0 top-12 w-32 rounded-2xl border border-zinc-100 bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                <div className="absolute right-0 top-12 w-32 rounded-2xl border border-[var(--awave-border)] bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                   <button
                     type="button"
-                    className="block w-full px-4 py-2 text-left text-[#d14343] hover:bg-zinc-50"
+                    className="block w-full px-4 py-2 text-left text-[#d14343] hover:bg-[var(--awave-secondary)]"
                     onClick={() => {
                       alert("신고가 접수되었습니다.")
                       setMenuOpen(false)
@@ -95,8 +95,8 @@ export default function OtherProfilePage() {
 
         <section className="space-y-4">
           <div>
-            <p className="text-lg font-semibold text-zinc-900">공개된 글</p>
-            <p className="text-sm text-zinc-400">이 사용자가 공유한 피드입니다.</p>
+            <p className="text-lg font-semibold text-[var(--awave-text)]">공개된 글</p>
+            <p className="text-sm text-[var(--awave-text-light)]">이 사용자가 공유한 피드입니다.</p>
           </div>
           <div className="space-y-4">
             {otherFeeds.map((feed) => (

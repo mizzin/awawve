@@ -56,20 +56,20 @@ export default function NotificationsPage() {
   return (
     <UserLayout>
       <div className="mx-auto flex w-full max-w-xl flex-col">
-        <section className="flex items-center justify-between border-b border-zinc-100 px-4 py-4">
-          <h1 className="text-2xl font-semibold text-zinc-900">알림</h1>
+        <section className="flex items-center justify-between border-b border-[var(--awave-border)] px-4 py-4">
+          <h1 className="text-2xl font-semibold text-[var(--awave-text)]">알림</h1>
           <button
             type="button"
-            className="text-sm font-medium text-[#3182F6] transition hover:text-[#2363c5]"
+            className="text-sm font-medium text-[var(--awave-primary)] transition hover:opacity-80"
             onClick={() => alert("모든 알림을 읽음 처리합니다.")}
           >
             모두 읽음
           </button>
         </section>
 
-        <section className="flex flex-1 flex-col divide-y divide-zinc-100">
+        <section className="flex flex-1 flex-col divide-y divide-[var(--awave-border)]">
           {!hasNotifications && (
-            <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-gray-400">
+            <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-[var(--awave-text-light)]">
               <div className="flex items-center gap-2 text-base font-medium">
                 <Bell className="size-5" />
                 <p>아직 새로운 알림이 없습니다 🔔</p>
@@ -83,7 +83,7 @@ export default function NotificationsPage() {
                 key={notification.id}
                 href={`/feed/${notification.feedId}`}
                 className={`flex items-center gap-3 px-4 py-3 transition ${
-                  notification.read ? "bg-white" : "bg-gray-50"
+                  notification.read ? "bg-white" : "bg-[var(--awave-secondary)]"
                 }`}
               >
                 <Avatar className="h-8 w-8">
@@ -94,17 +94,17 @@ export default function NotificationsPage() {
                       className="object-cover"
                     />
                   ) : (
-                    <AvatarFallback className="bg-slate-200 text-sm font-semibold text-zinc-600">
+                    <AvatarFallback className="bg-[var(--awave-secondary)] text-sm font-semibold text-[var(--awave-text)]">
                       {notification.user.slice(0, 1).toUpperCase()}
                     </AvatarFallback>
                   )}
                 </Avatar>
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="text-sm">
-                    <span className="font-semibold text-zinc-900">@{notification.user}</span>{" "}
-                    <span className="text-zinc-600">{notification.content}</span>
+                    <span className="font-semibold text-[var(--awave-text)]">@{notification.user}</span>{" "}
+                    <span className="text-[var(--awave-text-light)]">{notification.content}</span>
                   </div>
-                  <span className="self-end text-xs text-zinc-400">{notification.created_at}</span>
+                  <span className="self-end text-xs text-[var(--awave-text-light)]">{notification.created_at}</span>
                 </div>
               </Link>
             ))}

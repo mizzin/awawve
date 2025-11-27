@@ -87,9 +87,9 @@ const reactionMeta: Record<
   ReactionKey,
   { label: string; emoji: string; activeColor: string; bg: string }
 > = {
-  like: { label: "좋아요", emoji: "😄", activeColor: "text-[#3182F6]", bg: "bg-blue-50" },
-  funny: { label: "ㅋㅋㅋ", emoji: "🤭", activeColor: "text-[#FF7E36]", bg: "bg-orange-50" },
-  dislike: { label: "별로야", emoji: "😐", activeColor: "text-[#868E96]", bg: "bg-slate-100" },
+  like: { label: "좋아요", emoji: "😄", activeColor: "text-[var(--awave-primary)]", bg: "bg-[var(--awave-secondary)]" },
+  funny: { label: "ㅋㅋㅋ", emoji: "🤭", activeColor: "text-[var(--awave-text)]", bg: "bg-[var(--awave-secondary)]" },
+  dislike: { label: "별로야", emoji: "😐", activeColor: "text-[var(--awave-text-light)]", bg: "bg-[var(--awave-secondary)]" },
 }
 
 export default function FeedDetailPage({ params }: { params: { id: string } }) {
@@ -159,11 +159,11 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <UserLayout>
-      <div className="min-h-screen bg-white text-[#333333]">
+      <div className="min-h-screen bg-white text-[var(--awave-text)]">
         <main className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-48 pt-6">
         <section className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative h-9 w-9 overflow-hidden rounded-full bg-zinc-100">
+            <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
               <Image
                 src={post.author.avatarUrl}
                 alt={`${post.author.nickname} avatar`}
@@ -182,14 +182,14 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
           <div className="relative" ref={menuRef}>
             <button
               type="button"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-100 text-zinc-500 transition hover:border-zinc-200"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--awave-border)] text-[var(--awave-text-light)] transition hover:border-[var(--awave-primary)]/30"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-label="옵션 메뉴"
             >
               <MoreHorizontal className="size-5" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-12 w-36 rounded-2xl border border-zinc-100 bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+              <div className="absolute right-0 top-12 w-36 rounded-xl border border-[var(--awave-border)] bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                 {menuItems.map((item) => (
                   <button
                     key={item.label}
@@ -198,7 +198,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
                       item.action()
                       setMenuOpen(false)
                     }}
-                    className="block w-full px-4 py-2 text-left text-sm text-[#555] hover:bg-zinc-50"
+                    className="block w-full px-4 py-2 text-left text-sm text-[var(--awave-text)] hover:bg-[var(--awave-secondary)]"
                   >
                     {item.label}
                   </button>
@@ -209,7 +209,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
         </section>
 
         {post.imageUrl && (
-          <div className="mt-6 overflow-hidden rounded-3xl bg-zinc-100">
+          <div className="mt-6 overflow-hidden rounded-xl bg-[var(--awave-secondary)]">
             <div className="relative aspect-square w-full">
               <Image
                 src={post.imageUrl}
@@ -226,7 +226,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
 
         <section className="mt-6 space-y-3">
           <p className="text-lg leading-relaxed">{post.content}</p>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-[#999999]">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--awave-text-light)]">
             <span>작성 {formattedDate}</span>
             <span>·</span>
             <span>ID #{post.id}</span>
@@ -234,15 +234,15 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
         </section>
 
         {(post.category || post.location) && (
-          <section className="mt-4 space-y-3 rounded-2xl border border-zinc-100 bg-[#f7f8fa] px-4 py-3">
+          <section className="mt-4 space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-3">
             {post.category && (
-              <span className="inline-flex items-center rounded-full bg-[#E9F2FF] px-3 py-1 text-sm font-medium text-[#3182F6]">
+              <span className="inline-flex items-center rounded-full bg-[var(--awave-secondary)] px-3 py-1 text-sm font-medium text-[var(--awave-primary)]">
                 #{post.category}
               </span>
             )}
             {post.location && (
-              <div className="flex items-center gap-2 text-sm text-[#666666]">
-                <MapPin className="size-4 text-[#3182F6]" />
+              <div className="flex items-center gap-2 text-sm text-[var(--awave-text-light)]">
+                <MapPin className="size-4 text-[var(--awave-primary)]" />
                 <span>{post.location.place_name}</span>
               </div>
             )}
@@ -250,7 +250,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
         )}
 
         <section className="mt-8 space-y-4">
-          <div className="text-sm text-[#666666]">반응</div>
+          <div className="text-sm text-[var(--awave-text-light)]">반응</div>
           <div className="grid grid-cols-3 gap-3">
             {(Object.keys(reactionMeta) as ReactionKey[]).map((key) => {
               const meta = reactionMeta[key]
@@ -261,10 +261,10 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
                   type="button"
                   onClick={() => handleReaction(key)}
                   className={cn(
-                    "flex flex-col items-center rounded-2xl border px-3 py-3 text-sm transition",
+                    "flex flex-col items-center rounded-xl border px-3 py-3 text-sm transition",
                     isActive
                       ? `${meta.bg} border-transparent ${meta.activeColor} font-semibold`
-                      : "border-zinc-200 text-[#555555]"
+                      : "border-[var(--awave-border)] text-[var(--awave-text)]"
                   )}
                 >
                   <span className="text-xl">{meta.emoji}</span>
@@ -278,7 +278,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
         <section className="mt-10 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-base font-semibold">댓글 {comments.length}개</p>
-            <Button variant="ghost" size="sm" className="text-[#3182F6]" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
+            <Button variant="ghost" size="sm" className="text-[var(--awave-primary)]" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
               모두보기
             </Button>
           </div>
@@ -286,7 +286,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
           <div className="space-y-4">
             {comments.map((comment) => (
               <div key={comment.id} className="flex gap-3">
-                <div className="relative mt-1 h-8 w-8 overflow-hidden rounded-full bg-zinc-100">
+                <div className="relative mt-1 h-8 w-8 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
                   <Image
                     src={comment.user.avatarUrl}
                     alt={`${comment.user.nickname} profile`}
@@ -296,15 +296,15 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
                     unoptimized
                   />
                 </div>
-                <div className="flex-1 rounded-2xl bg-[#f7f8fa] px-4 py-2">
-                  <p className="text-sm font-semibold text-[#555555]">@{comment.user.nickname}</p>
-                  <p className="text-sm text-[#333333]">{comment.text}</p>
+                <div className="flex-1 rounded-xl bg-[var(--awave-secondary)] px-4 py-2">
+                  <p className="text-sm font-semibold text-[var(--awave-text)]">@{comment.user.nickname}</p>
+                  <p className="text-sm text-[var(--awave-text)]">{comment.text}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 rounded-2xl border border-zinc-100 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--awave-border)] px-3 py-2">
             <Input
               value={commentInput}
               onChange={(event) => setCommentInput(event.target.value)}
@@ -314,7 +314,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
             <Button
               type="button"
               size="icon"
-              className="rounded-full bg-[#3182F6] text-white"
+              className="rounded-full bg-[var(--awave-primary)] text-white"
               disabled={!commentInput.trim()}
               onClick={handleCommentSubmit}
             >
@@ -324,7 +324,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
         </section>
       </main>
 
-      <footer className="fixed inset-x-0 bottom-20 border border-zinc-100 bg-white/95 px-5 py-3 shadow-lg sm:bottom-24">
+      <footer className="fixed inset-x-0 bottom-20 border border-[var(--awave-border)] bg-white/95 px-5 py-3 shadow-lg sm:bottom-24">
         <div className="flex gap-3">
           {(Object.keys(reactionMeta) as ReactionKey[]).map((key) => {
             const meta = reactionMeta[key]
@@ -335,10 +335,10 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
                 type="button"
                 variant="outline"
                 className={cn(
-                  "flex-1 rounded-2xl border px-3 py-5 text-base font-semibold",
+                  "flex-1 rounded-xl border px-3 py-5 text-base font-semibold",
                   isActive
-                    ? `${meta.bg} border-transparent text-[#3182F6]`
-                    : "border-zinc-200 text-[#555555]"
+                    ? `${meta.bg} border-transparent text-[var(--awave-primary)]`
+                    : "border-[var(--awave-border)] text-[var(--awave-text)]"
                 )}
                 onClick={() => handleReaction(key)}
               >

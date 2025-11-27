@@ -16,9 +16,9 @@ const reactionMeta: Record<
   ReactionKey,
   { emoji: string; label: string; activeColor: string; idleColor: string }
 > = {
-  like: { emoji: "😄", label: "좋아요", activeColor: "text-[#3182F6]", idleColor: "text-gray-400" },
-  funny: { emoji: "🤭", label: "ㅋㅋㅋ", activeColor: "text-[#F6C445]", idleColor: "text-gray-400" },
-  dislike: { emoji: "😐", label: "별로야", activeColor: "text-[#868E96]", idleColor: "text-gray-400" },
+  like: { emoji: "😄", label: "좋아요", activeColor: "text-[var(--awave-primary)]", idleColor: "text-[var(--awave-text-light)]" },
+  funny: { emoji: "🤭", label: "ㅋㅋㅋ", activeColor: "text-[var(--awave-text)]", idleColor: "text-[var(--awave-text-light)]" },
+  dislike: { emoji: "😐", label: "별로야", activeColor: "text-[var(--awave-text-light)]", idleColor: "text-[var(--awave-text-light)]" },
 }
 const reactionOrder: ReactionKey[] = ["like", "funny", "dislike"]
 const wiggleAnimation = { rotate: [0, -10, 10, -6, 6, 0] }
@@ -88,12 +88,13 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
     toast({
       title: message,
       duration: 3000,
-      className: "rounded-xl border border-zinc-100 bg-white pr-12 text-gray-700 shadow-md",
+      className:
+        "rounded-xl border border-[var(--awave-border)] bg-white pr-12 text-[var(--awave-text)] shadow-md",
       action: (
         <ToastAction
           altText="로그인하기"
           onClick={() => router.push("/login")}
-          className="h-auto border-none bg-transparent p-0 text-[#3182F6] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
+          className="h-auto border-none bg-transparent p-0 text-[var(--awave-primary)] font-semibold hover:underline focus-visible:outline-none focus-visible:ring-0"
         >
           로그인하기
         </ToastAction>
@@ -131,7 +132,8 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
         toast({
           title: next ? `${reactionMeta[reaction].label} 반응을 남겼어요` : "반응을 취소했어요",
           duration: 1800,
-          className: "rounded-xl border border-zinc-100 bg-white text-gray-700 shadow-md",
+          className:
+            "rounded-xl border border-[var(--awave-border)] bg-white text-[var(--awave-text)] shadow-md",
         })
         return next
       })
@@ -149,7 +151,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "rounded-xl border border-zinc-100 bg-white p-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200",
+        "rounded-xl border border-[var(--awave-border)] bg-white p-4 text-left shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--awave-primary)]/20",
         readOnly ? "cursor-not-allowed opacity-90" : "cursor-pointer hover:shadow-md"
       )}
     >
@@ -159,21 +161,21 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
             {feed.author.avatarUrl ? (
               <AvatarImage src={feed.author.avatarUrl} alt={feed.author.nickname} className="object-cover" />
             ) : (
-              <AvatarFallback className="bg-gradient-to-br from-indigo-200 to-sky-100 text-sm font-semibold text-zinc-700">
+              <AvatarFallback className="bg-[var(--awave-secondary)] text-sm font-semibold text-[var(--awave-text)]">
                 {feed.author.nickname.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             )}
           </Avatar>
           <div>
-            <p className="text-sm font-semibold text-zinc-900">@{feed.author.nickname}</p>
-            <p className="text-xs text-gray-400">{dateLabel}</p>
+            <p className="text-sm font-semibold text-[var(--awave-text)]">@{feed.author.nickname}</p>
+            <p className="text-xs text-[var(--awave-text-light)]">{dateLabel}</p>
           </div>
         </div>
-        <span className="text-lg text-zinc-300">⋯</span>
+        <span className="text-lg text-[var(--awave-text-light)]/70">⋯</span>
       </header>
 
       {feed.imageUrl && (
-        <div className="relative mt-3 aspect-square w-full overflow-hidden bg-zinc-100">
+        <div className="relative mt-3 aspect-square w-full overflow-hidden bg-[var(--awave-secondary)]">
           <Image
             src={feed.imageUrl}
             alt="피드 이미지"
@@ -185,13 +187,13 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
         </div>
       )}
 
-      <p className="mt-3 text-sm leading-relaxed text-zinc-700 line-clamp-3">{feed.content}</p>
+      <p className="mt-3 text-sm leading-relaxed text-[var(--awave-text)] line-clamp-3">{feed.content}</p>
 
       <footer className="mt-3 flex items-center justify-between gap-4">
-        <div className="text-xs text-zinc-400">
+        <div className="text-xs text-[var(--awave-text-light)]">
           댓글 {commentCount} · 반응 {totalReactions}
         </div>
-        <div className="flex items-center gap-3 text-xl text-zinc-400">
+        <div className="flex items-center gap-3 text-xl text-[var(--awave-text-light)]">
           {reactionOrder.map((key) => (
             <motion.button
               key={key}

@@ -52,10 +52,10 @@ export default function LoginPage() {
 
   return (
     <UserLayout isLoggedIn={false}>
-      <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center justify-center px-4 pb-24 pt-8">
+      <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center justify-center bg-[var(--awave-bg)] px-4 pb-24 pt-8">
         <Card className="w-full p-6">
           <h2 className="mb-1 text-2xl font-semibold">로그인</h2>
-          <p className="mb-6 text-sm text-gray-500">로그인 후 계속 awave를 즐겨보세요.</p>
+          <p className="mb-6 text-sm text-[var(--awave-text-light)]">로그인 후 계속 awave를 즐겨보세요.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -91,9 +91,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center text-sm text-gray-500">
+          <div className="mt-4 text-center text-sm text-[var(--awave-text-light)]">
             계정이 없다면{" "}
-            <a href="/signup" className="text-blue-600 hover:underline">
+            <a href="/signup" className="text-[var(--awave-primary)] hover:underline">
               회원가입
             </a>
           </div>

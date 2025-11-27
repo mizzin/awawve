@@ -25,7 +25,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border border-zinc-100 bg-white p-4 text-sm shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-bottom-2 data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-80",
+  "group pointer-events-auto relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl border border-[var(--awave-border)] bg-white p-4 text-sm text-[var(--awave-text)] shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-bottom-2 data-[state=open]:slide-in-from-top-5 data-[state=open]:fade-in-80",
   {
     variants: {
       variant: {
@@ -61,7 +61,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-9 items-center justify-center rounded-md border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200",
+      "inline-flex h-9 items-center justify-center rounded-md border border-[var(--awave-border)] bg-white px-3 text-sm font-medium text-[var(--awave-text)] transition hover:bg-[var(--awave-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--awave-primary)]/30",
       className
     )}
     {...props}
@@ -76,7 +76,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-3 top-3 rounded-full p-1 text-zinc-400 transition hover:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200",
+      "absolute right-3 top-3 rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--awave-primary)]/30",
       className
     )}
     toast-close=""
@@ -101,7 +101,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm text-zinc-500", className)}
+    className={cn("text-sm text-[var(--awave-text-light)]", className)}
     {...props}
   />
 ))
