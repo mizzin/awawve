@@ -1,11 +1,15 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@supabase/supabase-js"
+
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import UserLayout from "@/app/layout/UserLayout"
+import { Button } from "@/components/ui/button"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { useUserAccess } from "@/lib/useUserAccess"
-import { useRouter } from "next/navigation"
 
 import { ProfileActions } from "../components/ProfileActions"
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
@@ -14,11 +18,17 @@ const profileUser: ProfileUser | null = null
 const profileFeeds: FeedCardData[] = []
 const profileActions: { label: string; message: string }[] = []
 const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 완료하고 함께 즐겨보세요 🌊"] as const
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+)
 
 export default function MyProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
   const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
+  const [hasSession, setHasSession] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
 
   const showAuthToast = () => {
     const message = AUTH_MESSAGES[Math.floor(Math.random() * AUTH_MESSAGES.length)]
@@ -39,7 +49,47 @@ export default function MyProfilePage() {
     })
   }
 
-  const isLoggedIn = isAuthenticated && !isLocked
+  useEffect(() => {
+    const syncSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      setHasSession(Boolean(data.session))
+    }
+    void syncSession()
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setHasSession(Boolean(session))
+      if (!session) {
+        toast({
+          title: "세션이 만료되어 로그아웃되었습니다.",
+          description: "다시 로그인해 주세요.",
+          duration: 3000,
+          className:
+            "rounded-xl border border-[var(--awave-border)] bg-white text-[var(--awave-text)] shadow-md",
+        })
+        router.replace("/login")
+      }
+    })
+    return () => {
+      data.subscription.unsubscribe()
+    }
+  }, [router, toast])
+
+  const handleLogout = async () => {
+    setSigningOut(true)
+    const { error } = await supabase.auth.signOut()
+    setSigningOut(false)
+    if (error) {
+      toast({
+        title: "로그아웃에 실패했어요.",
+        description: "잠시 후 다시 시도해 주세요.",
+        duration: 2500,
+        className: "rounded-xl border border-red-200 bg-red-50 text-red-800",
+      })
+      return
+    }
+    router.replace("/feed")
+  }
+
+  const isLoggedIn = hasSession && isAuthenticated && !isLocked
 
   return (
     <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? () => alert(lockReason ?? "신고 처리 중입니다.") : showAuthToast}>
@@ -78,6 +128,17 @@ export default function MyProfilePage() {
             </div>
           )}
         </section>
+
+        <div className="pt-2">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleLogout}
+            disabled={signingOut}
+          >
+            {signingOut ? "로그아웃 중..." : "로그아웃"}
+          </Button>
+        </div>
       </div>
     </UserLayout>
   )
