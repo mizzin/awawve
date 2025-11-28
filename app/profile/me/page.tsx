@@ -103,9 +103,9 @@ export default function MyProfilePage() {
       setLoadingProfile(true)
       const { data, error } = await supabase
         .from(PROFILE_TABLE)
-        .select<ProfileRow>("id, email, nickname, interest, profile_image")
+        .select("id, email, nickname, interest, profile_image")
         .eq("id", sessionUser.id)
-        .maybeSingle()
+        .maybeSingle<ProfileRow>()
 
       if (error) {
         console.error("Failed to load profile", error)
