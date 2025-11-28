@@ -87,9 +87,19 @@ export async function POST(request: Request) {
       .ilike(column, normalizedValue);
 
     if (error) {
-      console.error('Supabase availability check error:', error);
+      console.error('Supabase availability check error:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: (error as any)?.code,
+      });
       return NextResponse.json(
-        { message: '중복 확인 중 오류가 발생했습니다.' },
+        {
+          message:
+            error.message ||
+            error.hint ||
+            '중복 확인 중 오류가 발생했습니다. 환경 변수 또는 Supabase 권한을 확인하세요.',
+        },
         { status: 500 }
       );
     }
