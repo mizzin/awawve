@@ -88,7 +88,7 @@ export default function FeedPage() {
 
         {!isLoggedIn && !isLocked && (
           <div className="rounded-xl bg-[var(--awave-secondary)] px-4 py-3 text-xs text-[var(--awave-text-light)]">
-            로그인 후 다양한 파도를 즐기세요. 비로그인 사용자는 읽기 전용 모드로 제공돼요.
+            비로그인 사용자는 읽기 전용 모드로 제공돼요.
           </div>
         )}
 

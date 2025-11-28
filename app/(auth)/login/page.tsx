@@ -88,7 +88,7 @@ export default function LoginPage() {
       <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center justify-center bg-[var(--awave-bg)] px-4 pb-24 pt-8">
         <Card className="w-full p-6">
           <h2 className="mb-1 text-2xl font-semibold">로그인</h2>
-          <p className="mb-6 text-sm text-[var(--awave-text-light)]">로그인 후 계속 awave를 즐겨보세요.</p>
+          <p className="mb-3 text-sm text-[var(--awave-text-light)]">로그인 후 계속 awave를 즐겨보세요.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
