@@ -2,32 +2,50 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@supabase/supabase-js"
+import type { User } from "@supabase/supabase-js"
 
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
+import { supabase } from "@/lib/supabaseClient"
 import { useUserAccess } from "@/lib/useUserAccess"
 
 import { ProfileActions } from "../components/ProfileActions"
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 
-const profileUser: ProfileUser | null = null
 const profileFeeds: FeedCardData[] = []
 const profileActions: { label: string; message: string }[] = []
 const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 완료하고 함께 즐겨보세요 🌊"] as const
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-)
+const PROFILE_TABLE = process.env.NEXT_PUBLIC_SUPABASE_PROFILE_TABLE ?? "users"
+
+type ProfileRow = {
+  id: string
+  email: string | null
+  nickname: string | null
+  interest?: string[] | string | null
+  profile_image?: string | null
+}
+
+const normalizePreferences = (raw: ProfileRow["interest"]) => {
+  if (Array.isArray(raw)) return raw.filter(Boolean)
+  if (typeof raw === "string") {
+    return raw
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
 
 export default function MyProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
-  const [hasSession, setHasSession] = useState(false)
+  const { isLocked, lockReason } = useUserAccess(1)
+  const [sessionUser, setSessionUser] = useState<User | null>(null)
+  const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
+  const [loadingProfile, setLoadingProfile] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
 
   const showAuthToast = () => {
@@ -52,12 +70,14 @@ export default function MyProfilePage() {
   useEffect(() => {
     const syncSession = async () => {
       const { data } = await supabase.auth.getSession()
-      setHasSession(Boolean(data.session))
+      setSessionUser(data.session?.user ?? null)
     }
     void syncSession()
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setHasSession(Boolean(session))
+      const nextUser = session?.user ?? null
+      setSessionUser(nextUser)
       if (!session) {
+        setProfileUser(null)
         toast({
           title: "세션이 만료되어 로그아웃되었습니다.",
           description: "다시 로그인해 주세요.",
@@ -72,6 +92,53 @@ export default function MyProfilePage() {
       data.subscription.unsubscribe()
     }
   }, [router, toast])
+
+  useEffect(() => {
+    if (!sessionUser) {
+      setProfileUser(null)
+      return
+    }
+
+    const fetchProfile = async () => {
+      setLoadingProfile(true)
+      const { data, error } = await supabase
+        .from<ProfileRow>(PROFILE_TABLE)
+        .select("id, email, nickname, interest, profile_image")
+        .eq("id", sessionUser.id)
+        .maybeSingle()
+
+      if (error) {
+        console.error("Failed to load profile", error)
+        toast({
+          title: "프로필을 불러오지 못했어요.",
+          description: "잠시 후 다시 시도해 주세요.",
+          duration: 2500,
+          className: "rounded-xl border border-red-200 bg-red-50 text-red-800",
+        })
+        setProfileUser(null)
+        setLoadingProfile(false)
+        return
+      }
+
+      if (!data) {
+        setProfileUser(null)
+        setLoadingProfile(false)
+        return
+      }
+
+      const preferences = normalizePreferences(data.interest)
+      setProfileUser({
+        id: data.id,
+        nickname: data.nickname ?? data.email ?? "awave user",
+        email: data.email,
+        avatarUrl: data.profile_image ?? null,
+        preferences,
+      })
+      setLoadingProfile(false)
+    }
+
+    void fetchProfile()
+  }, [sessionUser, toast])
 
   const handleLogout = async () => {
     setSigningOut(true)
@@ -89,7 +156,7 @@ export default function MyProfilePage() {
     router.replace("/feed")
   }
 
-  const isLoggedIn = hasSession && isAuthenticated && !isLocked
+  const isLoggedIn = Boolean(sessionUser) && !isLocked
 
   return (
     <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? () => alert(lockReason ?? "신고 처리 중입니다.") : showAuthToast}>
@@ -99,7 +166,12 @@ export default function MyProfilePage() {
             신고 접수 상태입니다. 로그인/로그아웃 외에는 차단돼요.
           </div>
         )}
-        {profileUser ? (
+        {loadingProfile ? (
+          <div className="rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">
+            <p className="font-semibold text-[var(--awave-text)]">프로필 정보를 불러오는 중입니다.</p>
+            <p className="mt-1 text-[var(--awave-text-light)]">잠시만 기다려주세요.</p>
+          </div>
+        ) : profileUser ? (
           <ProfileHeader user={profileUser} showEmail />
         ) : (
           <div className="rounded-xl border border-dashed border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">

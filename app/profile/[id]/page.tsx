@@ -10,7 +10,7 @@ import { useUserAccess } from "@/lib/useUserAccess"
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 
 const otherProfile: ProfileUser = {
-  id: 7,
+  id: "7",
   nickname: "traveler_j",
   email: null,
   avatarUrl: "https://i.pravatar.cc/150?img=12",

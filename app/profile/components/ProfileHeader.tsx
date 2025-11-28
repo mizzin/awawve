@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export type ProfileUser = {
-  id: number
+  id: string
   nickname: string
   email?: string | null
   avatarUrl?: string | null
