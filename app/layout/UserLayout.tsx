@@ -49,7 +49,7 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth,
       <header className="flex flex-col border-b border-[var(--awave-border)] bg-[var(--awave-bg)] px-4 py-3">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-baseline transition hover:text-[var(--awave-button)]">
-            <span className="text-lg font-semibold text-[var(--awave-text)]">AWAVE</span>
+            <span className="text-lg font-semibold text-[var(--awave-text)]">aWave</span>
             <span className="ml-1 text-sm text-[var(--awave-text-light)]">@beta</span>
           </Link>
           <button

@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "awave | 새로운 파도를 만나보세요",
-  description: "awave에서 취향과 순간을 공유하고 새로운 파도를 만나보세요.",
+  title: "aWave | 새로운 파도를 만나보세요",
+  description: "aWave에서 취향과 순간을 공유하고 새로운 파도를 만나보세요.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
