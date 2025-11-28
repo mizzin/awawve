@@ -102,8 +102,8 @@ export default function MyProfilePage() {
     const fetchProfile = async () => {
       setLoadingProfile(true)
       const { data, error } = await supabase
-        .from<ProfileRow>(PROFILE_TABLE)
-        .select("id, email, nickname, interest, profile_image")
+        .from(PROFILE_TABLE)
+        .select<ProfileRow>("id, email, nickname, interest, profile_image")
         .eq("id", sessionUser.id)
         .maybeSingle()
 
