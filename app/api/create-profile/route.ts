@@ -35,6 +35,16 @@ function toStringArray(value: CreateProfileBody["interest"]) {
   return []
 }
 
+function toStringValue(value: CreateProfileBody["region"]) {
+  if (Array.isArray(value)) {
+    return value.map((item) => item.trim()).filter(Boolean).join(",")
+  }
+  if (typeof value === "string") {
+    return value.trim()
+  }
+  return ""
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateProfileBody
@@ -48,7 +58,7 @@ export async function POST(request: Request) {
     }
 
     const interest = toStringArray(body.interest)
-    const region = toStringArray(body.region)
+    const region = toStringValue(body.region)
     const passwordHash = await bcrypt.hash(password, 10)
 
     const insertPayload = {
@@ -57,7 +67,7 @@ export async function POST(request: Request) {
       nickname,
       password: passwordHash,
       interest,
-      region,
+      region: region || null,
       is_active: body.is_active ?? true,
       is_blocked: body.is_blocked ?? false,
       profile_image: body.profile_image ?? null,
