@@ -1,3 +1,6 @@
+/** @jsxImportSource react */
+"use client"
+
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import UserLayout from "@/app/layout/UserLayout"
 import { ToastAction } from "@/components/ui/toast"

@@ -1,3 +1,5 @@
+"use client"
+
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { mockApi, type ReportRow, type UserRecord } from "./mockApi"
