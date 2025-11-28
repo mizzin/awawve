@@ -1,4 +1,6 @@
-const MOCK_BASE_URL = process.env.NEXT_PUBLIC_MOCK_API || "http://localhost:4000"
+const MOCK_BASE_URL = process.env.NEXT_PUBLIC_MOCK_API
+
+export const mockApiAvailable = Boolean(MOCK_BASE_URL)
 
 export type ReportStatus = "대기" | "처리" | "무혐의"
 export type ReportType = "글 신고" | "댓글 신고" | "사용자 신고"
@@ -67,6 +69,9 @@ export type NoteRow = {
 }
 
 async function getJson<T>(path: string): Promise<T> {
+  if (!MOCK_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_MOCK_API is not configured. 로컬 mock 서버를 켜거나 환경 변수를 설정하세요.")
+  }
   const res = await fetch(`${MOCK_BASE_URL}${path}`, { cache: "no-store" })
   if (!res.ok) {
     throw new Error(`요청에 실패했어요: ${res.status} ${res.statusText}`)
@@ -75,6 +80,9 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 async function postJson<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  if (!MOCK_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_MOCK_API is not configured. 로컬 mock 서버를 켜거나 환경 변수를 설정하세요.")
+  }
   const res = await fetch(`${MOCK_BASE_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -88,6 +96,9 @@ async function postJson<T>(path: string, body: Record<string, unknown>): Promise
 }
 
 async function patchJson<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  if (!MOCK_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_MOCK_API is not configured. 로컬 mock 서버를 켜거나 환경 변수를 설정하세요.")
+  }
   const res = await fetch(`${MOCK_BASE_URL}${path}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

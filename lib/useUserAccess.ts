@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { mockApi, type ReportRow, type UserRecord } from "./mockApi"
+import { mockApi, mockApiAvailable, type ReportRow, type UserRecord } from "./mockApi"
 
 export function useUserAccess(userId = 1) {
   const [user, setUser] = useState<UserRecord | null>(null)
@@ -11,6 +11,13 @@ export function useUserAccess(userId = 1) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
+    if (!mockApiAvailable) {
+      setUser(null)
+      setPendingReports([])
+      setError("모의 API가 설정되지 않았습니다. NEXT_PUBLIC_MOCK_API를 설정하거나 백엔드를 연결하세요.")
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const [userData, pending] = await Promise.all([
