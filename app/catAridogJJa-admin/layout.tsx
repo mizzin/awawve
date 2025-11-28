@@ -9,12 +9,14 @@ type AdminLayoutProps = {
   children: ReactNode
 }
 
+const adminBasePath = "/catAridogJJa-admin"
+
 const navItems = [
-  { href: "/admin", label: "관리자 메인", icon: Home },
-  { href: "/admin/users", label: "사용자 관리", icon: Users },
-  { href: "/admin/feed", label: "피드 관리", icon: BarChart2 },
-  { href: "/admin/report", label: "신고 센터", icon: AlertTriangle },
-  { href: "/admin/system", label: "시스템 모니터링", icon: Settings },
+  { href: adminBasePath, label: "관리자 메인", icon: Home },
+  { href: `${adminBasePath}/users`, label: "사용자 관리", icon: Users },
+  { href: `${adminBasePath}/feed`, label: "피드 관리", icon: BarChart2 },
+  { href: `${adminBasePath}/report`, label: "신고 센터", icon: AlertTriangle },
+  { href: `${adminBasePath}/system`, label: "시스템 모니터링", icon: Settings },
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
