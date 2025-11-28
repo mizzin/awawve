@@ -4,7 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const profileTable = process.env.SUPABASE_PROFILE_TABLE ?? 'profiles';
+// 기본 테이블/컬럼을 users 스키마에 맞춰 설정
+const profileTable = process.env.SUPABASE_PROFILE_TABLE ?? 'users';
 const emailColumn = process.env.SUPABASE_EMAIL_COLUMN ?? 'email';
 const nicknameColumn = process.env.SUPABASE_NICKNAME_COLUMN ?? 'nickname';
 
