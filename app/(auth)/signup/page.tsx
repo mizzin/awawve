@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useRouter } from "next/navigation"
+import { createClient } from "@supabase/supabase-js"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,11 @@ type AvailabilityResponse = {
   available: boolean;
   message?: string;
 };
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+)
 
 async function requestAvailability(type: AvailabilityType, value: string) {
   const response = await fetch('/api/check-availability', {
@@ -54,6 +60,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Partial<Record<ErrorField, string>>>({});
   const [emailCheckStatus, setEmailCheckStatus] = useState<AvailabilityStatus>('idle');
   const [nicknameCheckStatus, setNicknameCheckStatus] = useState<AvailabilityStatus>('idle');
+  const [submitting, setSubmitting] = useState(false);
   const [availabilityMessages, setAvailabilityMessages] = useState<
     Partial<Record<AvailabilityType, string>>
   >({});
@@ -210,7 +217,7 @@ export default function SignupPage() {
     );
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (regions.length < 1) {
       toast({
         title: "관심 지역을 최소 1개 이상 선택해주세요.",
@@ -219,16 +226,54 @@ export default function SignupPage() {
       })
       return;
     }
-    const formData = { email, password, nickname, preferences, regions };
-    console.log('회원가입 데이터:', formData);
-    const nickLabel = nickname ? `@${nickname}` : "새로운 파도"
-    toast({
-      title: "회원가입이 완료되었습니다!",
-      description: `${nickLabel} 님, 로그인해 주세요.`,
-      duration: 1800,
-      className: "rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] text-[var(--awave-text)]",
-    })
-    setTimeout(() => router.push("/login"), 1800)
+    setSubmitting(true)
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+
+      if (authError) {
+        throw authError
+      }
+
+      const userId = authData.user?.id
+      const insertPayload = {
+        id: userId,
+        email,
+        nickname,
+        interest: preferences.join(","),
+        region: regions.join(","),
+        is_active: true,
+        is_blocked: false,
+        profile_image: null,
+      }
+
+      const { error: insertError } = await supabase.from("users").insert(insertPayload)
+      if (insertError) {
+        throw insertError
+      }
+
+      const nickLabel = nickname ? `@${nickname}` : "새로운 파도"
+      toast({
+        title: "회원가입이 완료되었습니다!",
+        description: `${nickLabel} 님, 로그인해 주세요.`,
+        duration: 1800,
+        className: "rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] text-[var(--awave-text)]",
+      })
+      setTimeout(() => router.push("/login"), 1800)
+    } catch (error: any) {
+      const message = error?.message ?? "회원가입 중 오류가 발생했습니다."
+      toast({
+        title: "회원가입 실패",
+        description: message,
+        duration: 2500,
+        className: "rounded-xl border border-red-200 bg-red-50 text-red-800",
+      })
+      setErrors((prev) => ({ ...prev, email: undefined, password: undefined, nickname: undefined }))
+    } finally {
+      setSubmitting(false)
+    }
   };
 
   return (
@@ -416,8 +461,8 @@ export default function SignupPage() {
                     <Button variant="outline" onClick={handlePrevious}>
                       이전
                     </Button>
-                    <Button onClick={handleSubmit} disabled={regions.length < 1}>
-                      회원가입 완료
+                    <Button onClick={handleSubmit} disabled={regions.length < 1 || submitting}>
+                      {submitting ? "처리 중..." : "회원가입 완료"}
                     </Button>
                   </div>
                 </div>
