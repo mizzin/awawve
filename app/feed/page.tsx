@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@supabase/supabase-js"
 
 import UserLayout from "@/app/layout/UserLayout"
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
@@ -9,23 +10,42 @@ import { Button } from "@/components/ui/button"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
-import { useUserAccess } from "@/lib/useUserAccess"
 
 const TOAST_MESSAGES = ["로그인 후 파도에 함께 타보세요 🌊", "회원가입 후 좀 더 즐겨보세요 🌊"] as const
 
 const FEEDS: FeedCardData[] = []
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+)
+
 export default function FeedPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
-
-  // TODO: Replace with Supabase auth once wired.
-  const isLoggedIn = isAuthenticated && !isLocked
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const isLocked = false
+  const lockReason = null
 
   useEffect(() => {
     router.prefetch("/login")
   }, [router])
+
+  useEffect(() => {
+    const syncSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      setIsLoggedIn(Boolean(data.session))
+    }
+    void syncSession()
+    const {
+      data: authListener,
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(Boolean(session))
+    })
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
 
   const showAuthToast = useCallback(() => {
     const message = TOAST_MESSAGES[Math.floor(Math.random() * TOAST_MESSAGES.length)]
