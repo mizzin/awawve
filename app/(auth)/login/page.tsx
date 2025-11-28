@@ -64,7 +64,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/dashboard")
+      router.push("/feed")
     } catch (err: any) {
       setError(err?.message ?? "Unknown error")
     } finally {
