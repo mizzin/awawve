@@ -26,12 +26,6 @@ interface CheckAvailabilityBody {
   value: string;
 }
 
-type LooseBody =
-  | CheckAvailabilityBody
-  | { email?: string; nickname?: string; value?: string; type?: unknown }
-  | null
-  | undefined;
-
 function isAvailabilityType(value: unknown): value is AvailabilityType {
   return value === 'email' || value === 'nickname';
 }
@@ -47,20 +41,26 @@ function availabilityMessage(type: AvailabilityType, available: boolean) {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => null)) as LooseBody;
+    const raw = await request.json().catch(() => null);
+    const body = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
 
     const inferredType: AvailabilityType | null =
-      isAvailabilityType(body?.type) ? body.type
-      : typeof body?.email === 'string' ? 'email'
-      : typeof body?.nickname === 'string' ? 'nickname'
-      : null;
+      isAvailabilityType(body.type)
+        ? body.type
+        : typeof body.email === 'string'
+          ? 'email'
+          : typeof body.nickname === 'string'
+            ? 'nickname'
+            : null;
 
     const inferredValue =
-      inferredType === 'email'
-        ? (body as any)?.value ?? body?.email
-        : inferredType === 'nickname'
-          ? (body as any)?.value ?? body?.nickname
-          : null;
+      typeof body.value === 'string'
+        ? body.value
+        : inferredType === 'email'
+          ? (body.email as string | undefined)
+          : inferredType === 'nickname'
+            ? (body.nickname as string | undefined)
+            : null;
 
     if (!inferredType) {
       return NextResponse.json({ message: '유효하지 않은 확인 타입입니다.' }, { status: 400 });
