@@ -26,6 +26,12 @@ interface CheckAvailabilityBody {
   value: string;
 }
 
+type LooseBody =
+  | CheckAvailabilityBody
+  | { email?: string; nickname?: string; value?: string; type?: unknown }
+  | null
+  | undefined;
+
 function isAvailabilityType(value: unknown): value is AvailabilityType {
   return value === 'email' || value === 'nickname';
 }
@@ -41,23 +47,38 @@ function availabilityMessage(type: AvailabilityType, available: boolean) {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => null)) as unknown;
-    const payload = (typeof body === 'object' && body !== null ? body : null) as
-      | Partial<CheckAvailabilityBody>
-      | null;
+    const body = (await request.json().catch(() => null)) as LooseBody;
 
-    if (!payload || !isAvailabilityType(payload.type)) {
+    const inferredType: AvailabilityType | null =
+      isAvailabilityType(body?.type) ? body.type
+      : typeof body?.email === 'string' ? 'email'
+      : typeof body?.nickname === 'string' ? 'nickname'
+      : null;
+
+    const inferredValue =
+      inferredType === 'email'
+        ? (body as any)?.value ?? body?.email
+        : inferredType === 'nickname'
+          ? (body as any)?.value ?? body?.nickname
+          : null;
+
+    if (!inferredType) {
       return NextResponse.json({ message: '유효하지 않은 확인 타입입니다.' }, { status: 400 });
     }
 
-    const { type, value } = payload;
-
-    if (typeof value !== 'string' || !value.trim()) {
+    if (typeof inferredValue !== 'string') {
       return NextResponse.json({ message: '확인할 값을 입력해주세요.' }, { status: 400 });
     }
 
-    const normalizedValue = normalize(value);
-    const column = columnMap[type];
+    const normalizedValue = normalize(inferredValue);
+    if (!normalizedValue) {
+      return NextResponse.json({ message: '확인할 값을 입력해주세요.' }, { status: 400 });
+    }
+
+    const column = columnMap[inferredType];
+    if (!column) {
+      return NextResponse.json({ message: '유효하지 않은 확인 타입입니다.' }, { status: 400 });
+    }
 
     const { count, error } = await supabase
       .from(profileTable)
@@ -76,7 +97,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       available,
-      message: availabilityMessage(type, available),
+      message: availabilityMessage(inferredType, available),
     });
   } catch (error) {
     console.error('Availability route error:', error);
