@@ -48,13 +48,15 @@ export default function LoginPage() {
       })
 
       if (signInError) {
-        const isEmailError = signInError.message?.toLowerCase().includes("email")
-        const isPasswordError = signInError.message?.toLowerCase().includes("password")
-
-        if (isEmailError) {
+        const msg = signInError.message?.toLowerCase() ?? ""
+        if (signInError.status === 429) {
+          setError("로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.")
+        } else if (msg.includes("email") && msg.includes("confirm")) {
           setEmailError("등록되지 않은 이메일이거나 인증이 완료되지 않았습니다.")
-        } else if (isPasswordError) {
-          setPasswordError("비밀번호를 다시 확인해 주세요.")
+        } else if (msg.includes("invalid login credentials") || msg.includes("password")) {
+          setPasswordError("이메일 또는 비밀번호가 올바르지 않습니다.")
+        } else if (msg.includes("email")) {
+          setEmailError("등록되지 않은 이메일이거나 인증이 완료되지 않았습니다.")
         } else {
           setError("로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.")
         }
