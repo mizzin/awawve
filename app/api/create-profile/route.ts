@@ -73,10 +73,19 @@ export async function POST(request: Request) {
       profile_image: body.profile_image ?? null,
     }
 
+    console.log("[create-profile] incoming", {
+      id,
+      email,
+      nickname,
+      interestCount: interest.length,
+      region: region || null,
+      table: profileTable,
+    })
+
     const { error } = await supabaseAdmin.from(profileTable).insert(insertPayload)
 
     if (error) {
-      console.error("Create profile error:", {
+      console.error("[create-profile] insert error", {
         message: error.message,
         details: (error as any)?.details,
         hint: (error as any)?.hint,
