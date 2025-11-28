@@ -28,20 +28,6 @@ export default function LoginPage() {
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 
-  const checkEmailExists = async (emailToCheck: string) => {
-    const { data, error: profileError } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", emailToCheck)
-      .limit(1)
-      .single()
-
-    if (profileError) {
-      return null
-    }
-    return data ?? null
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
@@ -56,25 +42,26 @@ export default function LoginPage() {
     }
 
     try {
-      const existingProfile = await checkEmailExists(email)
-      if (!existingProfile) {
-        setEmailError("등록되지 않은 이메일이에요.")
-        setLoading(false)
-        return
-      }
-
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) {
-        setPasswordError("비밀번호를 다시 확인해 주세요.")
+        const isEmailError = signInError.message?.toLowerCase().includes("email")
+        const isPasswordError = signInError.message?.toLowerCase().includes("password")
+
+        if (isEmailError) {
+          setEmailError("등록되지 않은 이메일이거나 인증이 완료되지 않았습니다.")
+        } else if (isPasswordError) {
+          setPasswordError("비밀번호를 다시 확인해 주세요.")
+        } else {
+          setError("로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.")
+        }
         setLoading(false)
         return
       }
 
-      // On success, navigate to dashboard (or desired protected route)
       router.push("/dashboard")
     } catch (err: any) {
       setError(err?.message ?? "Unknown error")
