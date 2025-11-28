@@ -1,4 +1,3 @@
-/** @jsxImportSource react */
 "use client"
 
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
