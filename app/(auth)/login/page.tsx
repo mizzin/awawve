@@ -48,6 +48,11 @@ export default function LoginPage() {
       })
 
       if (signInError) {
+        console.error("[login] signInWithPassword error", {
+          message: signInError.message,
+          status: signInError.status,
+          name: signInError.name,
+        })
         const msg = signInError.message?.toLowerCase() ?? ""
         if (signInError.status === 429) {
           setError("로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.")
