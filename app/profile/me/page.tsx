@@ -18,7 +18,7 @@ const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 �
 export default function MyProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { isLocked, lockReason } = useUserAccess(1)
+  const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
 
   const showAuthToast = () => {
     const message = AUTH_MESSAGES[Math.floor(Math.random() * AUTH_MESSAGES.length)]
@@ -39,7 +39,7 @@ export default function MyProfilePage() {
     })
   }
 
-  const isLoggedIn = !isLocked
+  const isLoggedIn = isAuthenticated && !isLocked
 
   return (
     <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? () => alert(lockReason ?? "신고 처리 중입니다.") : showAuthToast}>

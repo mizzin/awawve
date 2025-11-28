@@ -39,6 +39,8 @@ export function useUserAccess(userId = 1) {
     return user.accountState === "locked" || pendingReports.length > 0
   }, [pendingReports.length, user])
 
+  const isAuthenticated = Boolean(user)
+
   const lockReason = user?.lockReason ?? (pendingReports.length > 0 ? "신고 접수로 검토 중입니다." : null)
 
   return {
@@ -47,6 +49,7 @@ export function useUserAccess(userId = 1) {
     loading,
     error,
     isLocked,
+    isAuthenticated,
     lockReason,
     refresh: fetchData,
   }

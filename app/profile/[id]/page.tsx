@@ -39,7 +39,7 @@ const otherFeeds: FeedCardData[] = [
 ]
 
 export default function OtherProfilePage() {
-  const { isLocked, lockReason } = useUserAccess(1)
+  const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
@@ -65,7 +65,7 @@ export default function OtherProfilePage() {
   }
 
   return (
-    <UserLayout isLoggedIn={!isLocked} onRequireAuth={handleBlocked}>
+    <UserLayout isLoggedIn={isAuthenticated && !isLocked} onRequireAuth={handleBlocked}>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 pb-24 pt-8">
         {isLocked && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">

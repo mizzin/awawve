@@ -18,10 +18,10 @@ const FEEDS: FeedCardData[] = []
 export default function FeedPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { isLocked, lockReason } = useUserAccess(1)
+  const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
 
   // TODO: Replace with Supabase auth once wired.
-  const isLoggedIn = !isLocked
+  const isLoggedIn = isAuthenticated && !isLocked
 
   useEffect(() => {
     router.prefetch("/login")
@@ -88,7 +88,7 @@ export default function FeedPage() {
 
         {!isLoggedIn && !isLocked && (
           <div className="rounded-xl bg-[var(--awave-secondary)] px-4 py-3 text-xs text-[var(--awave-text-light)]">
-            비로그인 사용자는 읽기 전용 모드로 제공돼요.
+            로그인 후 다양한 파도를 즐기세요. 비로그인 사용자는 읽기 전용 모드로 제공돼요.
           </div>
         )}
 

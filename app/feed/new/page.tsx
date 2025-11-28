@@ -109,7 +109,7 @@ export default function NewFeedPage() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
   const [location, setLocation] = useState<SelectedLocation | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { isLocked, lockReason } = useUserAccess(1)
+  const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -128,7 +128,7 @@ export default function NewFeedPage() {
   }, [media?.preview])
 
   const remainingCount = MAX_CHAR_COUNT - body.length
-  const canSubmit = body.trim().length > 0 && !isSubmitting && !isLocked
+  const canSubmit = body.trim().length > 0 && !isSubmitting && !isLocked && isAuthenticated
 
   const handleBodyChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const nextValue = event.target.value.slice(0, MAX_CHAR_COUNT)
@@ -160,7 +160,7 @@ export default function NewFeedPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (isLocked) {
+    if (isLocked || !isAuthenticated) {
       alert(lockReason ?? "신고 처리 중이라 게시물을 작성할 수 없습니다.")
       return
     }
