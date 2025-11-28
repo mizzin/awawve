@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { MouseEvent, ReactNode } from "react"
 import { Bell, Home, PlusCircle, UserRound } from "lucide-react"
+import Image from "next/image"
 
 import { useUserAccess } from "@/lib/useUserAccess"
 
@@ -49,7 +50,7 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth,
       <header className="flex flex-col border-b border-[var(--awave-border)] bg-[var(--awave-bg)] px-4 py-3">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-baseline transition hover:text-[var(--awave-button)]">
-            <span className="text-lg font-semibold text-[var(--awave-text)]">aWave</span>
+            <Image src="/logo.png" alt="awave" width={96} height={32} className="h-7 w-auto" priority />
             <span className="ml-1 text-sm text-[var(--awave-text-light)]">@beta</span>
           </Link>
           <button
