@@ -5,10 +5,13 @@ import { usePathname } from "next/navigation"
 import type { MouseEvent, ReactNode } from "react"
 import { Bell, Home, PlusCircle, UserRound } from "lucide-react"
 
+import { useUserAccess } from "@/lib/useUserAccess"
+
 type UserLayoutProps = {
   children: ReactNode
   isLoggedIn?: boolean
   onRequireAuth?: () => void
+  userId?: number
 }
 
 const navItems = [
@@ -22,12 +25,20 @@ const navItems = [
   { href: "/profile/me", label: "프로필", icon: UserRound, match: (path: string) => path.startsWith("/profile") },
 ]
 
-export default function UserLayout({ children, isLoggedIn = true, onRequireAuth }: UserLayoutProps) {
+export default function UserLayout({ children, isLoggedIn = true, onRequireAuth, userId = 1 }: UserLayoutProps) {
   const pathname = usePathname()
+  const { isLocked, lockReason } = useUserAccess(userId)
+  const effectiveLoggedIn = isLoggedIn && !isLocked
 
   const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (isLocked) {
+      event.preventDefault()
+      alert(lockReason ?? "신고 처리 중이라 이용이 제한됩니다.")
+      return
+    }
+
     const requiresAuth = href === "/feed/new" || href.startsWith("/profile")
-    if (!isLoggedIn && requiresAuth) {
+    if (!effectiveLoggedIn && requiresAuth) {
       event.preventDefault()
       onRequireAuth?.()
     }
@@ -35,18 +46,27 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth 
 
   return (
     <div className="min-h-screen bg-[var(--awave-bg)] text-[var(--awave-text)]">
-      <header className="flex items-center justify-between border-b border-[var(--awave-border)] bg-[var(--awave-bg)] px-4 py-3">
-        <Link href="/" className="flex items-baseline transition hover:text-[var(--awave-button)]">
-          <span className="text-lg font-semibold text-[var(--awave-text)]">AWAVE</span>
-          <span className="ml-1 text-sm text-[var(--awave-text-light)]">@beta</span>
-        </Link>
-        <button
-          type="button"
-          aria-label="알림"
-          className="inline-flex items-center justify-center rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)]"
-        >
-          <Bell className="size-5" />
-        </button>
+      <header className="flex flex-col border-b border-[var(--awave-border)] bg-[var(--awave-bg)] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-baseline transition hover:text-[var(--awave-button)]">
+            <span className="text-lg font-semibold text-[var(--awave-text)]">AWAVE</span>
+            <span className="ml-1 text-sm text-[var(--awave-text-light)]">@beta</span>
+          </Link>
+          <button
+            type="button"
+            aria-label="알림"
+            className="inline-flex items-center justify-center rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)]"
+          >
+            <Bell className="size-5" />
+          </button>
+        </div>
+
+        {isLocked && (
+          <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            신고 접수 상태예요. 로그인/로그아웃 외에는 이용이 제한됩니다.{" "}
+            {lockReason ? `(${lockReason})` : "운영자가 검토 중입니다."}
+          </div>
+        )}
       </header>
 
       <main className="pb-24">{children}</main>

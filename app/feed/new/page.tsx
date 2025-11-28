@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { supabase } from "@/lib/supabaseClient"
 import { cn } from "@/lib/utils"
+import { useUserAccess } from "@/lib/useUserAccess"
 
 const MAX_CHAR_COUNT = 300
 const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
@@ -108,6 +109,7 @@ export default function NewFeedPage() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
   const [location, setLocation] = useState<SelectedLocation | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { isLocked, lockReason } = useUserAccess(1)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -126,7 +128,7 @@ export default function NewFeedPage() {
   }, [media?.preview])
 
   const remainingCount = MAX_CHAR_COUNT - body.length
-  const canSubmit = body.trim().length > 0 && !isSubmitting
+  const canSubmit = body.trim().length > 0 && !isSubmitting && !isLocked
 
   const handleBodyChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const nextValue = event.target.value.slice(0, MAX_CHAR_COUNT)
@@ -158,6 +160,10 @@ export default function NewFeedPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isLocked) {
+      alert(lockReason ?? "신고 처리 중이라 게시물을 작성할 수 없습니다.")
+      return
+    }
     if (!canSubmit) return
 
     setIsSubmitting(true)
@@ -190,202 +196,218 @@ export default function NewFeedPage() {
         <form
           onSubmit={handleSubmit}
           className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 pb-48 pt-8 font-sans"
+          aria-disabled={isLocked}
         >
-          <section className="space-y-2">
-            <p className="text-sm font-semibold text-[var(--awave-text-light)]">NOW</p>
-            <h1 className="text-2xl font-semibold tracking-tight text-[var(--awave-text)]">
-              지금 어떤 순간인가요?
-            </h1>
-          </section>
-
-        <section className="mt-6 rounded-xl border border-transparent bg-[var(--awave-secondary)] p-4 shadow-[0_6px_40px_-32px_rgba(0,0,0,0.45)]">
-          <div className="relative">
-            <textarea
-              ref={textareaRef}
-              rows={3}
-              value={body}
-              maxLength={MAX_CHAR_COUNT}
-              onChange={handleBodyChange}
-              placeholder="무슨 생각해요?"
-              className="w-full resize-none bg-transparent text-lg leading-relaxed text-[var(--awave-text)] placeholder:text-[var(--awave-text-light)] focus:outline-none"
-            />
-            <span
-              className={cn(
-                "absolute bottom-0 right-0 text-xs font-medium transition-colors",
-                remainingCount <= 20 ? "text-[var(--awave-primary)]" : "text-[var(--awave-text-light)]"
-              )}
-            >
-              {remainingCount}
-            </span>
-          </div>
-        </section>
-
-        <section className="mt-8 space-y-4">
-          <div>
-            <p className="text-sm font-medium text-[var(--awave-text-light)]">이미지 업로드 (선택)</p>
-            <p className="text-xs text-[var(--awave-text-light)]">최대 1장, JPG 또는 PNG</p>
-          </div>
-
-          {!media && (
-            <label
-              htmlFor="media-upload"
-              className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--awave-border)] bg-white px-6 py-10 text-center text-sm text-[var(--awave-text-light)] transition hover:border-[var(--awave-primary)]/30 hover:bg-[var(--awave-secondary)]"
-            >
-              <div className="flex size-12 items-center justify-center rounded-full bg-[var(--awave-secondary)] text-[var(--awave-primary)]">
-                <ImageIcon className="size-5" />
-              </div>
-              <div>
-                <p className="font-medium text-[var(--awave-text)]">이미지 첨부하기</p>
-                <p className="text-xs text-[var(--awave-text-light)]">드래그 & 드롭 또는 클릭</p>
-              </div>
-              <input
-                id="media-upload"
-                type="file"
-                accept="image/jpeg,image/png"
-                className="hidden"
-                onChange={handleMediaChange}
-              />
-            </label>
-          )}
-
-          {media && (
-            <div className="relative overflow-hidden rounded-xl border border-[var(--awave-border)]">
-              <div className="relative h-64 w-full">
-                <Image
-                  src={media.preview}
-                  alt="업로드 미리보기"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  className="object-cover"
-                  unoptimized
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleMediaRemove}
-                className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full bg-black/60 text-white shadow-lg transition hover:bg-black/70"
-                aria-label="이미지 삭제"
-              >
-                <X className="size-4" />
-              </button>
+          {isLocked && (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              신고 접수로 인해 글쓰기가 잠겨 있어요. 로그인/로그아웃만 가능합니다.
             </div>
           )}
-        </section>
+          <div className={cn(isLocked && "pointer-events-none opacity-60")}>
+            <section className="space-y-2">
+              <p className="text-sm font-semibold text-[var(--awave-text-light)]">NOW</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-[var(--awave-text)]">
+                지금 어떤 순간인가요?
+              </h1>
+            </section>
 
-        <section className="mt-8 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-[var(--awave-text-light)]">취향 태그 (선택)</p>
-            {selectedTag && (
-              <button
-                type="button"
-                onClick={() => setSelectedTag(null)}
-                className="text-xs font-medium text-[var(--awave-primary)]"
-              >
-                선택 해제
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {TASTE_TAGS.map((tag) => {
-              const isActive = selectedTag === tag
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => setSelectedTag(isActive ? null : tag)}
+            <section className="mt-6 rounded-xl border border-transparent bg-[var(--awave-secondary)] p-4 shadow-[0_6px_40px_-32px_rgba(0,0,0,0.45)]">
+              <div className="relative">
+                <textarea
+                  ref={textareaRef}
+                  rows={3}
+                  value={body}
+                  maxLength={MAX_CHAR_COUNT}
+                  onChange={handleBodyChange}
+                  placeholder="무슨 생각해요?"
+                  className="w-full resize-none bg-transparent text-lg leading-relaxed text-[var(--awave-text)] placeholder:text-[var(--awave-text-light)] focus:outline-none"
+                  disabled={isLocked}
+                />
+                <span
                   className={cn(
-                    "rounded-full border px-4 py-2 text-sm font-medium transition",
-                    isActive
-                      ? "border-[var(--awave-primary)] bg-[var(--awave-primary)] text-white shadow-sm"
-                      : "border-[var(--awave-border)] bg-white text-[var(--awave-text)] hover:border-[var(--awave-primary)]/40"
+                    "absolute bottom-0 right-0 text-xs font-medium transition-colors",
+                    remainingCount <= 20 ? "text-[var(--awave-primary)]" : "text-[var(--awave-text-light)]"
                   )}
                 >
-                  {tag}
-                </button>
-              )
-            })}
-          </div>
-        </section>
+                  {remainingCount}
+                </span>
+              </div>
+            </section>
 
-        <section className="mt-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-[var(--awave-text-light)]">위치 추가 (선택)</p>
-            {location ? (
-              <button
-                type="button"
-                onClick={() => setLocation(null)}
-                className="text-xs font-medium text-[var(--awave-text-light)]"
-              >
-                제거
-              </button>
-            ) : null}
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
-            onClick={() => setIsLocationModalOpen(true)}
-          >
-            <MapPin className="size-5 text-[var(--awave-primary)]" />
-            장소 추가
-          </Button>
+            <section className="mt-8 space-y-4">
+              <div>
+                <p className="text-sm font-medium text-[var(--awave-text-light)]">이미지 업로드 (선택)</p>
+                <p className="text-xs text-[var(--awave-text-light)]">최대 1장, JPG 또는 PNG</p>
+              </div>
 
-          {location && (
-            <div className="space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-base font-semibold text-[var(--awave-text)]">
-                    {location.placeName}
-                  </p>
-                  <p className="text-sm text-[var(--awave-text-light)]">{location.address}</p>
-                  <p className="text-xs text-[var(--awave-text-light)]">
-                    {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-[var(--awave-text-light)] hover:text-[var(--awave-text)]"
-                  onClick={() => setLocation(null)}
+              {!media && (
+                <label
+                  htmlFor="media-upload"
+                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[var(--awave-border)] bg-white px-6 py-10 text-center text-sm text-[var(--awave-text-light)] transition hover:border-[var(--awave-primary)]/30 hover:bg-[var(--awave-secondary)]"
                 >
-                  <X className="size-4" />
-                </Button>
+                  <div className="flex size-12 items-center justify-center rounded-full bg-[var(--awave-secondary)] text-[var(--awave-primary)]">
+                    <ImageIcon className="size-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-[var(--awave-text)]">이미지 첨부하기</p>
+                    <p className="text-xs text-[var(--awave-text-light)]">드래그 & 드롭 또는 클릭</p>
+                  </div>
+                  <input
+                    id="media-upload"
+                    type="file"
+                    accept="image/jpeg,image/png"
+                    className="hidden"
+                    onChange={handleMediaChange}
+                    disabled={isLocked}
+                  />
+                </label>
+              )}
+
+              {media && (
+                <div className="relative overflow-hidden rounded-xl border border-[var(--awave-border)]">
+                  <div className="relative h-64 w-full">
+                    <Image
+                      src={media.preview}
+                      alt="업로드 미리보기"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 600px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleMediaRemove}
+                    className="absolute right-3 top-3 inline-flex size-8 items-center justify-center rounded-full bg-black/60 text-white shadow-lg transition hover:bg-black/70"
+                    aria-label="이미지 삭제"
+                    disabled={isLocked}
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className="mt-8 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-[var(--awave-text-light)]">취향 태그 (선택)</p>
+                {selectedTag && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTag(null)}
+                    className="text-xs font-medium text-[var(--awave-primary)]"
+                    disabled={isLocked}
+                  >
+                    선택 해제
+                  </button>
+                )}
               </div>
-              <div className="overflow-hidden rounded-xl border border-[var(--awave-border)]">
-                <iframe
-                  title="선택한 위치 미리보기"
-                  src={`https://www.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
-                  className="h-48 w-full"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
+              <div className="flex flex-wrap gap-2">
+                {TASTE_TAGS.map((tag) => {
+                  const isActive = selectedTag === tag
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setSelectedTag(isActive ? null : tag)}
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-sm font-medium transition",
+                        isActive
+                          ? "border-[var(--awave-primary)] bg-[var(--awave-primary)] text-white shadow-sm"
+                          : "border-[var(--awave-border)] bg-white text-[var(--awave-text)] hover:border-[var(--awave-primary)]/40"
+                      )}
+                      disabled={isLocked}
+                    >
+                      {tag}
+                    </button>
+                  )
+                })}
               </div>
+            </section>
+
+            <section className="mt-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-[var(--awave-text-light)]">위치 추가 (선택)</p>
+                {location ? (
+                  <button
+                    type="button"
+                    onClick={() => setLocation(null)}
+                    className="text-xs font-medium text-[var(--awave-text-light)]"
+                    disabled={isLocked}
+                  >
+                    제거
+                  </button>
+                ) : null}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
+                onClick={() => setIsLocationModalOpen(true)}
+                disabled={isLocked}
+              >
+                <MapPin className="size-5 text-[var(--awave-primary)]" />
+                장소 추가
+              </Button>
+
+              {location && (
+                <div className="space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-base font-semibold text-[var(--awave-text)]">
+                        {location.placeName}
+                      </p>
+                      <p className="text-sm text-[var(--awave-text-light)]">{location.address}</p>
+                      <p className="text-xs text-[var(--awave-text-light)]">
+                        {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-[var(--awave-text-light)] hover:text-[var(--awave-text)]"
+                      onClick={() => setLocation(null)}
+                      disabled={isLocked}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                  <div className="overflow-hidden rounded-xl border border-[var(--awave-border)]">
+                    <iframe
+                      title="선택한 위치 미리보기"
+                      src={`https://www.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
+                      className="h-48 w-full"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <div className="mt-12 text-xs text-[var(--awave-text-light)]">
+              사진, 태그, 위치는 모두 선택 사항이에요. 본문만으로도 바로 등록할 수 있어요.
             </div>
-          )}
-        </section>
 
-        <div className="mt-12 text-xs text-[var(--awave-text-light)]">
-          사진, 태그, 위치는 모두 선택 사항이에요. 본문만으로도 바로 등록할 수 있어요.
-        </div>
-
-        <div className="fixed inset-x-0 bottom-20 border border-[var(--awave-border)] bg-white/95 px-5 py-4 shadow-lg sm:bottom-24">
-          <Button
-            type="submit"
-            disabled={!canSubmit}
-            className="w-full rounded-xl bg-[var(--awave-primary)] py-6 text-base font-semibold text-white shadow-lg transition hover:opacity-90 disabled:bg-[var(--awave-text-light)]"
-          >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <LoaderCircle className="size-4 animate-spin" />
-                등록 중...
-              </span>
-            ) : (
-              "등록"
-            )}
-          </Button>
-        </div>
-      </form>
+            <div className="fixed inset-x-0 bottom-20 border border-[var(--awave-border)] bg-white/95 px-5 py-4 shadow-lg sm:bottom-24">
+              <Button
+                type="submit"
+                disabled={!canSubmit}
+                className="w-full rounded-xl bg-[var(--awave-primary)] py-6 text-base font-semibold text-white shadow-lg transition hover:opacity-90 disabled:bg-[var(--awave-text-light)]"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <LoaderCircle className="size-4 animate-spin" />
+                    등록 중...
+                  </span>
+                ) : (
+                  "등록"
+                )}
+              </Button>
+            </div>
+          </div>
+        </form>
 
         {isLocationModalOpen && (
           <LocationModal

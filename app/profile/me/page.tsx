@@ -2,6 +2,7 @@ import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import UserLayout from "@/app/layout/UserLayout"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
+import { useUserAccess } from "@/lib/useUserAccess"
 import { useRouter } from "next/navigation"
 
 import { ProfileActions } from "../components/ProfileActions"
@@ -15,6 +16,7 @@ const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 �
 export default function MyProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { isLocked, lockReason } = useUserAccess(1)
 
   const showAuthToast = () => {
     const message = AUTH_MESSAGES[Math.floor(Math.random() * AUTH_MESSAGES.length)]
@@ -35,11 +37,16 @@ export default function MyProfilePage() {
     })
   }
 
-  const isLoggedIn = false
+  const isLoggedIn = !isLocked
 
   return (
-    <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={showAuthToast}>
+    <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? () => alert(lockReason ?? "신고 처리 중입니다.") : showAuthToast}>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 pb-24 pt-8">
+        {isLocked && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+            신고 접수 상태입니다. 로그인/로그아웃 외에는 차단돼요.
+          </div>
+        )}
         {profileUser ? (
           <ProfileHeader user={profileUser} showEmail />
         ) : (
@@ -59,7 +66,7 @@ export default function MyProfilePage() {
           {profileFeeds.length > 0 ? (
             <div className="space-y-4">
               {profileFeeds.map((feed) => (
-                <FeedCard key={feed.id} feed={feed} />
+                <FeedCard key={feed.id} feed={feed} readOnly={!isLoggedIn} />
               ))}
             </div>
           ) : (

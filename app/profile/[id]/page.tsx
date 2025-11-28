@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
+import { useUserAccess } from "@/lib/useUserAccess"
 
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 
@@ -38,6 +39,7 @@ const otherFeeds: FeedCardData[] = [
 ]
 
 export default function OtherProfilePage() {
+  const { isLocked, lockReason } = useUserAccess(1)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
@@ -58,9 +60,18 @@ export default function OtherProfilePage() {
     }
   }, [])
 
+  const handleBlocked = () => {
+    alert(lockReason ?? "신고 확인 중이라 이용이 제한됩니다.")
+  }
+
   return (
-    <UserLayout>
+    <UserLayout isLoggedIn={!isLocked} onRequireAuth={handleBlocked}>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 pb-24 pt-8">
+        {isLocked && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+            신고 접수 상태입니다. 로그인/로그아웃 외에는 차단돼요.
+          </div>
+        )}
         <ProfileHeader
           user={otherProfile}
           rightSlot={
@@ -70,7 +81,13 @@ export default function OtherProfilePage() {
                 size="icon"
                 variant="outline"
                 className="rounded-full border-[var(--awave-border)]"
-                onClick={() => setMenuOpen((prev) => !prev)}
+                onClick={() => {
+                  if (isLocked) {
+                    handleBlocked()
+                    return
+                  }
+                  setMenuOpen((prev) => !prev)
+                }}
                 aria-label="프로필 옵션"
               >
                 ⋯
@@ -81,6 +98,10 @@ export default function OtherProfilePage() {
                     type="button"
                     className="block w-full px-4 py-2 text-left text-[#d14343] hover:bg-[var(--awave-secondary)]"
                     onClick={() => {
+                      if (isLocked) {
+                        handleBlocked()
+                        return
+                      }
                       alert("신고가 접수되었습니다.")
                       setMenuOpen(false)
                     }}
@@ -100,7 +121,7 @@ export default function OtherProfilePage() {
           </div>
           <div className="space-y-4">
             {otherFeeds.map((feed) => (
-              <FeedCard key={feed.id} feed={feed} />
+              <FeedCard key={feed.id} feed={feed} readOnly={isLocked} onRequireAuth={handleBlocked} />
             ))}
           </div>
         </section>
