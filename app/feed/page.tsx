@@ -2,28 +2,31 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@supabase/supabase-js"
+import type { User } from "@supabase/supabase-js"
 
 import UserLayout from "@/app/layout/UserLayout"
 import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
 import { Button } from "@/components/ui/button"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
+import { supabase } from "@/lib/supabaseClient"
 import { cn } from "@/lib/utils"
 
 const TOAST_MESSAGES = ["로그인 후 파도에 함께 타보세요 🌊", "회원가입 후 좀 더 즐겨보세요 🌊"] as const
 
 const FEEDS: FeedCardData[] = []
+const PROFILE_TABLE = process.env.NEXT_PUBLIC_SUPABASE_PROFILE_TABLE ?? "users"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-)
+type ProfileRow = {
+  nickname: string | null
+  email: string | null
+}
 
 export default function FeedPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [sessionUser, setSessionUser] = useState<User | null>(null)
+  const [profileName, setProfileName] = useState<string | null>(null)
   const isLocked = false
   const lockReason = null
 
@@ -34,18 +37,38 @@ export default function FeedPage() {
   useEffect(() => {
     const syncSession = async () => {
       const { data } = await supabase.auth.getSession()
-      setIsLoggedIn(Boolean(data.session))
+      setSessionUser(data.session?.user ?? null)
     }
     void syncSession()
     const {
       data: authListener,
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(Boolean(session))
+      setSessionUser(session?.user ?? null)
     })
     return () => {
       authListener.subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (!sessionUser) {
+      setProfileName(null)
+      return
+    }
+
+    const fetchProfile = async () => {
+      const { data } = await supabase
+        .from(PROFILE_TABLE)
+        .select("nickname, email")
+        .eq("id", sessionUser.id)
+        .maybeSingle<ProfileRow>()
+
+      const nickname = data?.nickname ?? data?.email ?? null
+      setProfileName(nickname)
+    }
+
+    void fetchProfile()
+  }, [sessionUser])
 
   const showAuthToast = useCallback(() => {
     const message = TOAST_MESSAGES[Math.floor(Math.random() * TOAST_MESSAGES.length)]
@@ -82,16 +105,18 @@ export default function FeedPage() {
       return
     }
 
-    if (!isLoggedIn) {
+    if (!sessionUser) {
       showAuthToast()
       return
     }
     router.push("/feed/new")
-  }, [isLocked, isLoggedIn, router, showAuthToast, showLockedToast])
+  }, [isLocked, sessionUser, router, showAuthToast, showLockedToast])
 
-  const gatedButtonClass = cn((!isLoggedIn || isLocked) && "cursor-not-allowed")
+  const gatedButtonClass = cn((!sessionUser || isLocked) && "cursor-not-allowed")
 
   const hasFeeds = FEEDS.length > 0
+  const isLoggedIn = Boolean(sessionUser)
+  const greeting = profileName ? `@${profileName}` : "awave"
 
   return (
     <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? showLockedToast : showAuthToast}>
@@ -103,6 +128,14 @@ export default function FeedPage() {
         {isLocked && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
             신고 접수 상태입니다. 로그인/로그아웃 외 기능은 차단됩니다.
+          </div>
+        )}
+
+        {isLoggedIn && (
+          <div className="rounded-xl border border-[var(--awave-border)] bg-white px-4 py-3 text-sm text-[var(--awave-text)] shadow-sm">
+            <p>
+              [{greeting} 님 awave에 환영해요! 같이 파도를 타봐요.]
+            </p>
           </div>
         )}
 
