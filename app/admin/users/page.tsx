@@ -71,28 +71,29 @@ export default function AdminUsersPage() {
   const selectedUser = useMemo(() => users.find((user) => user.id === selectedUserId) ?? null, [selectedUserId, users])
 
   useEffect(() => {
-    if (!selectedUserId) return
+    if (selectedUserId == null) return
+    const userId = selectedUserId
 
     async function loadPanelData() {
       setPanelLoading(true)
       try {
         if (activePanel === "reports") {
-          setReports(await mockApi.getReportsByUser(selectedUserId))
+          setReports(await mockApi.getReportsByUser(userId))
         } else if (activePanel === "content") {
           const [userFeeds, userComments] = await Promise.all([
-            mockApi.getFeedsByUser(selectedUserId),
-            mockApi.getCommentsByUser(selectedUserId),
+            mockApi.getFeedsByUser(userId),
+            mockApi.getCommentsByUser(userId),
           ])
           setFeeds(userFeeds)
           setComments(userComments)
         } else if (activePanel === "sanction") {
-          setSanctions(await mockApi.getSanctions(selectedUserId))
+          setSanctions(await mockApi.getSanctions(userId))
           if (selectedUser) {
             setSanctionStatus(selectedUser.status)
             setSanctionReason(selectedUser.lockReason ?? "")
           }
         } else if (activePanel === "detail") {
-          setNotes(await mockApi.getNotes(selectedUserId))
+          setNotes(await mockApi.getNotes(userId))
         }
         setError(null)
       } catch (err) {
