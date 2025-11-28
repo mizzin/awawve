@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import bcrypt from "bcrypt"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -15,6 +16,7 @@ type CreateProfileBody = {
   id?: string
   email?: string
   nickname?: string
+  password?: string
   interest?: string[] | string | null
   region?: string[] | string | null
   is_active?: boolean
@@ -36,19 +38,24 @@ function toStringArray(value: CreateProfileBody["interest"]) {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateProfileBody
-    const { id, email, nickname } = body
+    const { id, email, nickname, password } = body
 
-    if (!id || !email || !nickname) {
-      return NextResponse.json({ message: "필수 필드(id, email, nickname)를 모두 입력해주세요." }, { status: 400 })
+    if (!id || !email || !nickname || !password) {
+      return NextResponse.json(
+        { message: "필수 필드(id, email, nickname, password)를 모두 입력해주세요." },
+        { status: 400 }
+      )
     }
 
     const interest = toStringArray(body.interest)
     const region = toStringArray(body.region)
+    const passwordHash = await bcrypt.hash(password, 10)
 
     const insertPayload = {
       id,
       email,
       nickname,
+      password: passwordHash,
       interest,
       region,
       is_active: body.is_active ?? true,

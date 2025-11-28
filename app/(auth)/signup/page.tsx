@@ -253,6 +253,7 @@ export default function SignupPage() {
           id: userId,
           email,
           nickname,
+          password,
           interest: preferences,
           region: regions,
           is_active: true,
