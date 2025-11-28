@@ -30,7 +30,7 @@ export default function LoginPage() {
 
   const checkEmailExists = async (emailToCheck: string) => {
     const { data, error: profileError } = await supabase
-      .from("profiles")
+      .from("users")
       .select("id")
       .eq("email", emailToCheck)
       .limit(1)
