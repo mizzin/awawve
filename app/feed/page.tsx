@@ -27,6 +27,7 @@ export default function FeedPage() {
   const { toast } = useToast()
   const [sessionUser, setSessionUser] = useState<User | null>(null)
   const [profileName, setProfileName] = useState<string | null>(null)
+  const [hasShownGreeting, setHasShownGreeting] = useState(false)
   const isLocked = false
   const lockReason = null
 
@@ -69,6 +70,23 @@ export default function FeedPage() {
 
     void fetchProfile()
   }, [sessionUser])
+
+  useEffect(() => {
+    if (sessionUser && !hasShownGreeting) {
+      const name = profileName ? `@${profileName}` : "awave"
+      toast({
+        title: `${name}님, awave에 오신 걸 환영해요 🌊`,
+        duration: 2500,
+        className:
+          "cursor-pointer rounded-xl border border-[var(--awave-border)] bg-white pr-12 text-[var(--awave-text)] shadow-md",
+      })
+      setHasShownGreeting(true)
+    }
+
+    if (!sessionUser && hasShownGreeting) {
+      setHasShownGreeting(false)
+    }
+  }, [hasShownGreeting, profileName, sessionUser, toast])
 
   const showAuthToast = useCallback(() => {
     const message = TOAST_MESSAGES[Math.floor(Math.random() * TOAST_MESSAGES.length)]
@@ -116,7 +134,6 @@ export default function FeedPage() {
 
   const hasFeeds = FEEDS.length > 0
   const isLoggedIn = Boolean(sessionUser)
-  const greeting = profileName ? `@${profileName}` : "awave"
 
   return (
     <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? showLockedToast : showAuthToast}>
@@ -128,14 +145,6 @@ export default function FeedPage() {
         {isLocked && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
             신고 접수 상태입니다. 로그인/로그아웃 외 기능은 차단됩니다.
-          </div>
-        )}
-
-        {isLoggedIn && (
-            <div className="rounded-lg border border-[var(--awave-border)] bg-white px-3 py-2 text-sm text-[var(--awave-text)] shadow-sm">
-            <p>
-              [{greeting}님, awave에 오신 걸 환영해요 🌊]
-            </p>
           </div>
         )}
 
