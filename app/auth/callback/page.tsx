@@ -87,13 +87,15 @@ function CallbackContent() {
         let session = data.session
 
         if (!session) {
-          const exchange = await supabase.auth.exchangeCodeForSession(window.location.href)
-
-          if (exchange.error) {
-            throw exchange.error
+          const code = searchParams.get("code")
+          if (code) {
+            const { data: exchangeData, error: exchangeError } =
+              await supabase.auth.exchangeCodeForSession(code)
+            if (exchangeError) {
+              throw exchangeError
+            }
+            session = exchangeData.session
           }
-
-          session = exchange.data.session
         }
 
         if (!session) {
