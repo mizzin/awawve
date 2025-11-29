@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 
 import UserLayout from "@/app/layout/UserLayout"
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabaseClient"
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
@@ -121,5 +121,24 @@ export default function LoginPage() {
         </Card>
       </div>
     </UserLayout>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <UserLayout isLoggedIn={false}>
+          <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center justify-center bg-[var(--awave-bg)] px-4 pb-24 pt-8">
+            <Card className="w-full p-6 text-center">
+              <h2 className="mb-2 text-xl font-semibold">로그인</h2>
+              <p className="text-sm text-[var(--awave-text-light)]">잠시만 기다려 주세요…</p>
+            </Card>
+          </div>
+        </UserLayout>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   )
 }
