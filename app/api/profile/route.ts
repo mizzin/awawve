@@ -19,24 +19,30 @@ const normalizeArray = (value: unknown, max?: number) => {
   return []
 }
 
-export async function GET() {
-  const supabase = createServerClient(
+async function createClient() {
+  const cookieStore = await cookies()
+
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
     {
       cookies: {
         get(name) {
-          return cookies().get(name)?.value
+          return cookieStore.get(name)?.value
         },
         set(name, value, options) {
-          cookies().set(name, value, options)
+          cookieStore.set(name, value, options)
         },
         remove(name, options) {
-          cookies().set(name, "", { ...options, maxAge: 0 })
+          cookieStore.set(name, "", { ...options, maxAge: 0 })
         },
       },
     }
   )
+}
+
+export async function GET() {
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -76,23 +82,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-    {
-      cookies: {
-        get(name) {
-          return cookies().get(name)?.value
-        },
-        set(name, value, options) {
-          cookies().set(name, value, options)
-        },
-        remove(name, options) {
-          cookies().set(name, "", { ...options, maxAge: 0 })
-        },
-      },
-    }
-  )
+  const supabase = await createClient()
 
   const {
     data: { user },
