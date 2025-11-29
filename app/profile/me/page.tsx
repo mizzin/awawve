@@ -181,7 +181,7 @@ export default function MyProfilePage() {
                   onClick={() => setEditing(true)}
                   disabled={!isLoggedIn || isLocked}
                 >
-                  프로필 수정
+                  수정
                 </Button>
               }
             />
