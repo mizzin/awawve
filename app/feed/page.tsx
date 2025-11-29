@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 
@@ -27,7 +27,7 @@ export default function FeedPage() {
   const { toast } = useToast()
   const [sessionUser, setSessionUser] = useState<User | null>(null)
   const [profileName, setProfileName] = useState<string | null>(null)
-  const [hasShownGreeting, setHasShownGreeting] = useState(false)
+  const lastGreetedUserIdRef = useRef<string | null>(null)
   const isLocked = false
   const lockReason = null
 
@@ -72,7 +72,7 @@ export default function FeedPage() {
   }, [sessionUser])
 
   useEffect(() => {
-    if (sessionUser && !hasShownGreeting) {
+    if (sessionUser?.id && lastGreetedUserIdRef.current !== sessionUser.id) {
       const name = profileName ? `@${profileName}` : "awave"
       toast({
         title: `${name}님, awave에 오신 걸 환영해요 🌊`,
@@ -80,13 +80,13 @@ export default function FeedPage() {
         className:
           "cursor-pointer rounded-xl border border-[var(--awave-border)] bg-white pr-12 text-[var(--awave-text)] shadow-md",
       })
-      setHasShownGreeting(true)
+      lastGreetedUserIdRef.current = sessionUser.id
     }
 
-    if (!sessionUser && hasShownGreeting) {
-      setHasShownGreeting(false)
+    if (!sessionUser) {
+      lastGreetedUserIdRef.current = null
     }
-  }, [hasShownGreeting, profileName, sessionUser, toast])
+  }, [profileName, sessionUser, toast])
 
   const showAuthToast = useCallback(() => {
     const message = TOAST_MESSAGES[Math.floor(Math.random() * TOAST_MESSAGES.length)]
