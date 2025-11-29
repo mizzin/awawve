@@ -218,10 +218,22 @@ export default function SignupPage() {
         (typeof window !== "undefined" ? window.location.origin : "")
       const emailRedirectTo = origin ? `${origin.replace(/\/$/, "")}/auth/callback` : undefined
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const signupDraft = {
         email,
-        options: { emailRedirectTo },
-      } as any)
+        nickname,
+        interest: preferences,
+        region: regions,
+      }
+
+      // Persist draft to complete profile creation after magic link validation.
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("awave.signup.draft", JSON.stringify(signupDraft))
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo, shouldCreateUser: true },
+      })
 
       if (authError) {
         const friendly =
@@ -229,35 +241,6 @@ export default function SignupPage() {
             ? "이메일 인증 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."
             : authError.message
         throw new Error(friendly)
-      }
-
-      const userId = authData.user?.id
-      if (!userId) {
-        throw new Error("회원 정보를 확인할 수 없습니다. 잠시 후 다시 시도해주세요.")
-      }
-
-      const profileResponse = await fetch("/api/create-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: userId,
-          email,
-          nickname,
-          interest: preferences,
-          region: regions,
-          is_active: true,
-          is_blocked: false,
-          profile_image: null,
-        }),
-      })
-
-      if (!profileResponse.ok) {
-        const payload = await profileResponse.json().catch(() => ({}))
-        const message =
-          (payload as any)?.message ??
-          (payload as any)?.error ??
-          "회원 프로필 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-        throw new Error(message)
       }
 
       const nickLabel = nickname ? `@${nickname}` : "새로운 파도"

@@ -14,6 +14,7 @@ function CallbackContent() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status>("checking")
   const [message, setMessage] = useState("세션을 확인하고 있어요...")
+  const [profileStatus, setProfileStatus] = useState<Status>("checking")
 
   useEffect(() => {
     let active = true
@@ -41,6 +42,59 @@ function CallbackContent() {
 
         if (!session) {
           throw new Error("세션 정보를 확인할 수 없습니다.")
+        }
+
+        const draftKey = "awave.signup.draft"
+        const draftRaw = typeof window !== "undefined" ? window.localStorage.getItem(draftKey) : null
+
+        if (draftRaw) {
+          try {
+            const draft = JSON.parse(draftRaw) as {
+              email?: string
+              nickname?: string
+              interest?: string[]
+              region?: string[]
+            }
+            const user = session.user
+
+            if (draft?.email && draft.email === user.email) {
+              const profileResponse = await fetch("/api/create-profile", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  id: user.id,
+                  email: user.email,
+                  nickname: draft.nickname,
+                  interest: draft.interest ?? [],
+                  region: draft.region ?? [],
+                  is_active: true,
+                  is_blocked: false,
+                  profile_image: null,
+                }),
+              })
+
+              if (!profileResponse.ok) {
+                const payload = await profileResponse.json().catch(() => ({}))
+                const profileMessage =
+                  (payload as any)?.message ??
+                  (payload as any)?.error ??
+                  "프로필 생성 중 오류가 발생했습니다."
+                throw new Error(profileMessage)
+              }
+            }
+          } catch (profileError) {
+            console.error("[auth/callback] profile creation failed", profileError)
+            setProfileStatus("error")
+            setMessage(
+              profileError instanceof Error
+                ? profileError.message
+                : "프로필 생성에 실패했습니다. 다시 시도해주세요."
+            )
+          } finally {
+            if (typeof window !== "undefined") {
+              window.localStorage.removeItem(draftKey)
+            }
+          }
         }
 
         if (!active) return
