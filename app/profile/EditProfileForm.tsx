@@ -226,8 +226,8 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
         </div>
       </div>
 
-      <div className="space-y-6 px-4 pb-6">
-        <div className="space-y-3">
+      <div className="space-y-4 px-4 pb-6">
+        <div className="space-y-2">
         <p className="text-sm font-medium text-[var(--awave-text)]">프로필 이미지</p>
         <div className="flex items-center gap-4">
           <div className="relative h-20 w-20 overflow-hidden rounded-full border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
