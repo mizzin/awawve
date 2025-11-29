@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabaseClient"
+import { getProfile } from "@/lib/profile"
 import { useUserAccess } from "@/lib/useUserAccess"
 
 import { EditProfileForm } from "../EditProfileForm"
@@ -19,29 +20,7 @@ import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 const profileFeeds: FeedCardData[] = []
 const profileActions: { label: string; message: string }[] = []
 const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 완료하고 함께 즐겨보세요 🌊"] as const
-const PROFILE_TABLE = process.env.NEXT_PUBLIC_SUPABASE_PROFILE_TABLE ?? "users"
-
-type ProfileRow = {
-  id: string
-  email: string | null
-  nickname: string | null
-  interest?: string[] | string | null
-  region?: string[] | string | null
-  profile_image?: string | null
-}
-
-const normalizePreferences = (raw: ProfileRow["interest"]) => {
-  if (Array.isArray(raw)) return raw.filter(Boolean)
-  if (typeof raw === "string") {
-    return raw
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean)
-  }
-  return []
-}
-
-const normalizeRegions = (raw: ProfileRow["region"]) => {
+const normalizeArray = (raw: string[] | string | null | undefined) => {
   if (Array.isArray(raw)) return raw.filter(Boolean)
   if (typeof raw === "string") {
     return raw
@@ -114,39 +93,28 @@ export default function MyProfilePage() {
       return
     }
     setLoadingProfile(true)
-    const { data, error } = await supabase
-      .from(PROFILE_TABLE)
-      .select("id, email, nickname, interest, region, profile_image")
-      .eq("id", sessionUser.id)
-      .maybeSingle<ProfileRow>()
-
-    if (error) {
+    try {
+      const data = await getProfile()
+      setProfileUser({
+        id: data.id,
+        nickname: data.nickname ?? data.email ?? "awave user",
+        email: data.email,
+        avatarUrl: data.profile_image ?? null,
+        preferences: normalizeArray(data.interest),
+        regions: normalizeArray(data.region),
+      })
+    } catch (error) {
       console.error("Failed to refresh profile", error)
       toast({
         title: "프로필을 다시 불러오지 못했어요.",
-        description: "잠시 후 다시 시도해 주세요.",
+        description: error instanceof Error ? error.message : "잠시 후 다시 시도해 주세요.",
         duration: 2500,
         className: "rounded-xl border border-red-200 bg-red-50 text-red-800",
       })
-      setLoadingProfile(false)
-      return
-    }
-
-    if (!data) {
       setProfileUser(null)
+    } finally {
       setLoadingProfile(false)
-      return
     }
-
-    setProfileUser({
-      id: data.id,
-      nickname: data.nickname ?? data.email ?? "awave user",
-      email: data.email,
-      avatarUrl: data.profile_image ?? null,
-      preferences: normalizePreferences(data.interest),
-      regions: normalizeRegions(data.region),
-    })
-    setLoadingProfile(false)
   }, [sessionUser, toast])
 
   useEffect(() => {
