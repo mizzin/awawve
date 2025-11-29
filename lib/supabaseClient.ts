@@ -14,7 +14,7 @@ const createPersistentStorage = (): SupportedStorage => {
   if (typeof window === "undefined") {
     return {
       getItem: () => null,
-      setItem: (_key, value) => value,
+      setItem: () => {},
       removeItem: () => {},
     }
   }
