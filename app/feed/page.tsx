@@ -142,10 +142,7 @@ export default function FeedPage() {
 
   return (
     <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? showLockedToast : showAuthToast}>
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-6 px-4 pb-28 ">
-        <header className="flex items-start justify-between">
-       
-        </header>
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-24">
 
         {isLocked && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
@@ -159,7 +156,7 @@ export default function FeedPage() {
           </div>
         )}
 
-        <section className="flex flex-col gap-6">
+        <section className="flex flex-col gap-4">
           {hasFeeds ? (
             FEEDS.map((feed) => (
               <FeedCard
