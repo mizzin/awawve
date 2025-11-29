@@ -66,7 +66,11 @@ export default function MyProfilePage() {
       setSessionUser(data.session?.user ?? null)
     }
     void syncSession()
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Avoid refetch on silent token refresh; only react to real auth state changes.
+      if (event === "TOKEN_REFRESHED") {
+        return
+      }
       const nextUser = session?.user ?? null
       setSessionUser(nextUser)
       if (!session) {
