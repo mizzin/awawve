@@ -10,7 +10,13 @@ export type ProfileResponse = {
 }
 
 export async function getProfile() {
-  const response = await fetch("/api/profile", { method: "GET" })
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+
+  const response = await fetch("/api/profile", {
+    method: "GET",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}))
     throw new Error((payload as any)?.message ?? "프로필 정보를 불러오지 못했습니다.")
@@ -24,9 +30,15 @@ export async function updateProfile(payload: {
   region: string[]
   profile_image: string | null
 }) {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+
   const response = await fetch("/api/profile", {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(payload),
   })
 

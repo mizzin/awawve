@@ -19,13 +19,20 @@ const normalizeArray = (value: unknown, max?: number) => {
   return []
 }
 
-async function createClient() {
-  const cookieStore = await cookies()
+function createClient(request: Request) {
+  const cookieStore = cookies()
+  const authHeader = request.headers.get("authorization")
+  const accessToken = authHeader?.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7)
+    : undefined
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
     {
+      global: {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      },
       cookies: {
         get(name) {
           return cookieStore.get(name)?.value
@@ -41,8 +48,8 @@ async function createClient() {
   )
 }
 
-export async function GET() {
-  const supabase = await createClient()
+export async function GET(request: Request) {
+  const supabase = createClient(request)
 
   const {
     data: { user },
@@ -82,7 +89,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = await createClient()
+  const supabase = createClient(request)
 
   const {
     data: { user },
