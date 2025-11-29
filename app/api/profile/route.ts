@@ -19,8 +19,8 @@ const normalizeArray = (value: unknown, max?: number) => {
   return []
 }
 
-function createClient(request: Request) {
-  const cookieStore = cookies()
+async function createClient(request: Request) {
+  const cookieStore = (await cookies()) as any
   const authHeader = request.headers.get("authorization")
   const accessToken = authHeader?.toLowerCase().startsWith("bearer ")
     ? authHeader.slice(7)
@@ -49,7 +49,7 @@ function createClient(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const supabase = createClient(request)
+  const supabase = await createClient(request)
 
   const {
     data: { user },
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = createClient(request)
+  const supabase = await createClient(request)
 
   const {
     data: { user },
