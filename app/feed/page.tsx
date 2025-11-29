@@ -132,9 +132,9 @@ export default function FeedPage() {
         )}
 
         {isLoggedIn && (
-          <div className="rounded-xl border border-[var(--awave-border)] bg-white px-4 py-3 text-sm text-[var(--awave-text)] shadow-sm">
+            <div className="rounded-lg border border-[var(--awave-border)] bg-white px-3 py-2 text-sm text-[var(--awave-text)] shadow-sm">
             <p>
-              [{greeting} 님 awave에 환영해요! 같이 파도를 타봐요.]
+              [{greeting}님, awave에 오신 걸 환영해요 🌊]
             </p>
           </div>
         )}
