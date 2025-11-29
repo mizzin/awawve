@@ -1,30 +1,22 @@
 "use client"
 
 import React, { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@supabase/supabase-js"
+import { useSearchParams } from "next/navigation"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
-// Supabase client (browser)
-// Make sure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in .env.local
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-)
+import { supabase } from "@/lib/supabaseClient"
 
 export default function LoginPage() {
-  const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [emailError, setEmailError] = useState<string | null>(null)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 
@@ -33,7 +25,7 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     setEmailError(null)
-    setPasswordError(null)
+    setSuccessMessage(null)
 
     if (!isValidEmail(email)) {
       setEmailError("등록되지 않은 이메일이에요.")
@@ -42,13 +34,24 @@ export default function LoginPage() {
     }
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const origin =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (typeof window !== "undefined" ? window.location.origin : "")
+      const next = searchParams.get("next") || "/feed"
+      const emailRedirectTo = origin
+        ? `${origin.replace(/\/$/, "")}/auth/callback?next=${encodeURIComponent(next)}`
+        : undefined
+
+      const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
-        password,
+        options: {
+          emailRedirectTo,
+          shouldCreateUser: false,
+        },
       })
 
       if (signInError) {
-        console.error("[login] signInWithPassword error", {
+        console.error("[login] signInWithOtp error", {
           message: signInError.message,
           status: signInError.status,
           name: signInError.name,
@@ -58,8 +61,6 @@ export default function LoginPage() {
           setError("로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.")
         } else if (msg.includes("email") && msg.includes("confirm")) {
           setEmailError("등록되지 않은 이메일이거나 잘못된 이메일 입니다.")
-        } else if (msg.includes("invalid login credentials") || msg.includes("password")) {
-          setPasswordError("이메일 또는 비밀번호가 올바르지 않습니다.")
         } else if (msg.includes("email")) {
           setEmailError("등록되지 않은 이메일이거나 잘못된 이메일 입니다.")
         } else {
@@ -69,7 +70,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/feed")
+      setSuccessMessage("매직링크를 이메일로 전송했습니다. 30분 이내에 메일을 열어 로그인해 주세요.")
     } catch (err: any) {
       setError(err?.message ?? "Unknown error")
     } finally {
@@ -99,28 +100,15 @@ export default function LoginPage() {
               {emailError && <p className="mt-1 text-sm text-red-600">{emailError}</p>}
             </div>
 
-            <div>
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="mt-1"
-              />
-              {passwordError && <p className="mt-1 text-sm text-red-600">{passwordError}</p>}
-            </div>
-
             {error && <p className="text-sm text-red-600">{error}</p>}
+            {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
 
             <Button
               type="submit"
               className="w-full bg-[var(--awave-button)] hover:bg-[var(--awave-button)]/90"
               disabled={loading}
             >
-              {loading ? "로그인 중…" : "로그인하기"}
+              {loading ? "메일 전송 중…" : "매직링크 받기"}
             </Button>
           </form>
 

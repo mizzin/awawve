@@ -15,7 +15,6 @@ type CreateProfileBody = {
   id?: string
   email?: string
   nickname?: string
-  password?: string
   interest?: string[] | string | null
   region?: string[] | string | null
   is_active?: boolean

@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { createClient } from "@supabase/supabase-js"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
@@ -11,20 +10,16 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
+import { supabase } from "@/lib/supabaseClient"
 
 type AvailabilityType = 'email' | 'nickname';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'duplicate' | 'error';
-type ErrorField = 'email' | 'password' | 'nickname';
+type ErrorField = 'email' | 'nickname';
 
 type AvailabilityResponse = {
   available: boolean;
   message?: string;
 };
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-)
 
 async function requestAvailability(type: AvailabilityType, value: string) {
   const response = await fetch('/api/check-availability', {
@@ -45,15 +40,13 @@ async function requestAvailability(type: AvailabilityType, value: string) {
   return payload;
 }
 
-const steps = [1, 2, 3, 4];
+const steps = [1, 2, 3];
 
 export default function SignupPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [preferences, setPreferences] = useState<string[]>([]);
   const [regions, setRegions] = useState<string[]>([]);
@@ -105,7 +98,6 @@ export default function SignupPage() {
   }, [nickname]);
 
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validatePassword = (password: string) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/.test(password);
   const validateNickname = (nickname: string) =>
     /^[가-힣a-zA-Z0-9_]{2,12}$/.test(nickname); // 2~12자, 한글/영문/숫자/언더바 허용
 
@@ -177,14 +169,7 @@ export default function SignupPage() {
         return;
       }
     }
-    if (currentStep === 2 && (!validatePassword(password) || password !== confirmPassword)) {
-      setFieldError(
-        'password',
-        '비밀번호는 영문 + 숫자 조합의 8~16자여야 하며, 두 비밀번호가 일치해야 합니다.'
-      );
-      return;
-    }
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       if (!validateNickname(nickname)) {
         setFieldError(
           'nickname',
@@ -228,9 +213,14 @@ export default function SignupPage() {
     }
     setSubmitting(true)
     try {
+      const origin =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (typeof window !== "undefined" ? window.location.origin : "")
+      const emailRedirectTo = origin ? `${origin.replace(/\/$/, "")}/auth/callback` : undefined
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
-        password,
+        options: { emailRedirectTo },
       })
 
       if (authError) {
@@ -253,7 +243,6 @@ export default function SignupPage() {
           id: userId,
           email,
           nickname,
-          password,
           interest: preferences,
           region: regions,
           is_active: true,
@@ -273,12 +262,13 @@ export default function SignupPage() {
 
       const nickLabel = nickname ? `@${nickname}` : "새로운 파도"
       toast({
-        title: "회원가입이 완료되었습니다!",
-        description: `${nickLabel} 님, 로그인해 주세요.`,
-        duration: 1800,
-        className: "rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] text-[var(--awave-text)]",
+        title: "회원가입 신청 완료",
+        description: `${nickLabel} 님의 이메일로 매직링크를 보냈어요. 30분 이내에 메일을 열어 로그인해주세요.`,
+        duration: 3500,
+        className:
+          "rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] text-[var(--awave-text)]",
       })
-      setTimeout(() => router.push("/login"), 1800)
+      setTimeout(() => router.push("/login"), 2000)
     } catch (error: any) {
       const message =
         typeof error?.message === "string"
@@ -290,7 +280,7 @@ export default function SignupPage() {
         duration: 2500,
         className: "rounded-xl border border-red-200 bg-red-50 text-red-800",
       })
-      setErrors((prev) => ({ ...prev, email: undefined, password: undefined, nickname: undefined }))
+      setErrors((prev) => ({ ...prev, email: undefined, nickname: undefined }))
     } finally {
       setSubmitting(false)
     }
@@ -334,9 +324,9 @@ export default function SignupPage() {
                     className="mt-1"
                   />
                   <div className="mt-3 rounded-lg border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-3 text-sm text-[var(--awave-text)] leading-relaxed">
-                    <p className="font-medium">이메일은 계정을 찾는 열쇠예요.</p>
+                    <p className="font-medium">입력하신 이메일로 매직링크를 보내드려요.</p>
                     <p className="mt-1 text-xs">
-                      비밀번호 찾기 등 필수 알림에만 사용하며, 마케팅 목적이나 광고 발송에는 절대 활용하지 않습니다.
+                      받은 편지함을 확인할 수 있는 이메일을 입력해주세요. 회원가입 승인과 로그인에 사용됩니다.
                     </p>
                   </div>
                   <Button
@@ -362,47 +352,6 @@ export default function SignupPage() {
               )}
 
               {currentStep === 2 && (
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">비밀번호 설정</h2>
-                  <Label htmlFor="password">비밀번호</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="비밀번호"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1"
-                  />
-                  <Label htmlFor="confirm-password" className="mt-4">
-                    비밀번호 확인
-                  </Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    placeholder="비밀번호 확인"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="mt-1"
-                  />
-                  <div className="mt-3 rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900 leading-relaxed">
-                    <p className="font-medium">안전한 비밀번호를 만들어주세요.</p>
-                    <p className="mt-1 text-xs">
-                      영문과 숫자를 모두 포함해 8~16자로 설정하고 두 입력값이 정확히 일치해야 합니다.
-                    </p>
-                  </div>
-                  {errors.password && <p className="text-sm text-red-600 mt-2">{errors.password}</p>}
-                  <div className="flex justify-between mt-6">
-                    <Button variant="outline" onClick={handlePrevious}>
-                      이전
-                    </Button>
-                    <Button onClick={handleNext} disabled={!password || !confirmPassword}>
-                      다음
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
                 <div>
                   <h2 className="text-xl font-semibold mb-4">닉네임 입력</h2>
                   <Label htmlFor="nickname">닉네임</Label>
@@ -446,7 +395,7 @@ export default function SignupPage() {
                 </div>
               )}
 
-              {currentStep === 4 && (
+              {currentStep === 3 && (
                 <div>
                   <h2 className="text-xl font-semibold mb-4">취향 및 지역 선택</h2>
                   <div>
