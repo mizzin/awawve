@@ -226,11 +226,19 @@ export default function SignupPage() {
         window.localStorage.setItem("awave.signup.draft", JSON.stringify(signupDraft))
       }
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: EMAIL_REDIRECT_TO,
-          data: { signupDraft },
+          shouldCreateUser: true,
+          data: {
+            signupDraft: {
+              email,
+              nickname,
+              interest: preferences,
+              region: regions,
+            },
+          },
         },
       })
 
