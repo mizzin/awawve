@@ -203,8 +203,8 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
 
   return (
     <Card className="w-full space-y-6 bg-white p-0 shadow-none">
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <p className="text-xl font-semibold text-[var(--awave-text)]">프로필 수정</p>
+      <div className="flex items-center justify-between px-4 pt-2 pb-2">
+        <h1 className="m-0 p-0 text-xl font-semibold text-[var(--awave-text)]">프로필 수정</h1>
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -226,8 +226,8 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
         </div>
       </div>
 
-      <div className="space-y-4 px-4 pb-6">
-        <div className="space-y-2">
+      <div className="space-y-4 px-4 pb-4">
+        <div className="mt-2 space-y-2">
         <p className="text-sm font-medium text-[var(--awave-text)]">프로필 이미지</p>
         <div className="flex items-center gap-4">
           <div className="relative h-20 w-20 overflow-hidden rounded-full border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
