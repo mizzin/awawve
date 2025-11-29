@@ -5,9 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Card } from "@/components/ui/card"
-import { supabase } from "@/lib/supabaseClient"
+import { SITE_URL, supabase } from "@/lib/supabaseClient"
 
 type Status = "checking" | "error"
+
+const EMAIL_REDIRECT_TO = `${SITE_URL}/auth/callback`
 
 function CallbackContent() {
   const router = useRouter()
@@ -35,8 +37,7 @@ function CallbackContent() {
   useEffect(() => {
     let active = true
     const handleSession = async () => {
-      const nextParam = searchParams.get("next")
-      const redirectTarget = nextParam === "/home" ? "/home" : "/feed"
+      const redirectTarget = "/feed"
 
       try {
         const draftKey = "awave.signup.draft"
@@ -55,19 +56,10 @@ function CallbackContent() {
           if (errorCode === "otp_expired" && draftRaw) {
             try {
               const draft = localDraft
-              const origin =
-                process.env.NEXT_PUBLIC_SITE_URL ||
-                (typeof window !== "undefined" ? window.location.origin : "")
-              const emailRedirectTo = origin
-                ? `${origin.replace(/\/$/, "")}/auth/callback?next=${encodeURIComponent(
-                    redirectTarget
-                  )}`
-                : undefined
-
               if (draft?.email) {
                 await supabase.auth.signInWithOtp({
                   email: draft.email,
-                  options: { emailRedirectTo, shouldCreateUser: true },
+                  options: { emailRedirectTo: EMAIL_REDIRECT_TO, shouldCreateUser: true },
                 })
                 setMessage("새 로그인 링크를 보냈어요. 메일함을 확인해 주세요.")
               }
@@ -87,15 +79,11 @@ function CallbackContent() {
         let session = data.session
 
         if (!session) {
-          const code = searchParams.get("code")
-          if (code) {
-            const { data: exchangeData, error: exchangeError } =
-              await supabase.auth.exchangeCodeForSession(code)
-            if (exchangeError) {
-              throw exchangeError
-            }
-            session = exchangeData.session
+          const exchange = await supabase.auth.exchangeCodeForSession(window.location.href)
+          if (exchange.error) {
+            throw exchange.error
           }
+          session = exchange.data.session
         }
 
         if (!session) {
@@ -172,7 +160,7 @@ function CallbackContent() {
         setStatus("error")
         setMessage(
           err?.message ??
-            "매직링크 인증에 실패했어요. 링크가 만료되었거나 이미 사용된 것일 수 있습니다."
+            "로그인 링크 인증에 실패했어요. 링크가 만료되었거나 이미 사용된 것일 수 있습니다."
         )
       }
     }

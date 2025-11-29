@@ -1,5 +1,7 @@
 import { createClient, type SupportedStorage } from "@supabase/supabase-js"
 
+export const SITE_URL = "https://www.tryawave.com"
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const storageKey = "awave.auth.session"
@@ -9,7 +11,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Supabase URL 또는 공개 키가 설정되지 않았습니다.")
 }
 
-// LocalStorage-backed storage with a 30-day TTL to keep magic-link sessions alive.
+if (process.env.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL !== SITE_URL) {
+  throw new Error(`NEXT_PUBLIC_SITE_URL는 ${SITE_URL} 이어야 합니다.`)
+}
+
+// LocalStorage-backed storage with a 30-day TTL to keep login-link sessions alive.
 const createPersistentStorage = (): SupportedStorage => {
   if (typeof window === "undefined") {
     return {

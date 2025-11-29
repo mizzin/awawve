@@ -1,17 +1,17 @@
 "use client"
 
-import React, { Suspense, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import React, { useState } from "react"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { supabase } from "@/lib/supabaseClient"
+import { SITE_URL, supabase } from "@/lib/supabaseClient"
 
-function LoginContent() {
-  const searchParams = useSearchParams()
+const EMAIL_REDIRECT_TO = `${SITE_URL}/auth/callback`
+
+export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,18 +34,10 @@ function LoginContent() {
     }
 
     try {
-      const origin =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        (typeof window !== "undefined" ? window.location.origin : "")
-      const next = searchParams.get("next") || "/feed"
-      const emailRedirectTo = origin
-        ? `${origin.replace(/\/$/, "")}/auth/callback?next=${encodeURIComponent(next)}`
-        : undefined
-
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo,
+          emailRedirectTo: EMAIL_REDIRECT_TO,
           shouldCreateUser: false,
         },
       })
@@ -70,7 +62,7 @@ function LoginContent() {
         return
       }
 
-      setSuccessMessage("이메일 로그인 링크를 전송했습니다. 30분 이내에 메일을 열어 로그인해 주세요.")
+      setSuccessMessage("로그인 링크를 이메일로 보냈어요. 메일함을 확인해주세요.")
     } catch (err: any) {
       setError(err?.message ?? "Unknown error")
     } finally {
@@ -121,24 +113,5 @@ function LoginContent() {
         </Card>
       </div>
     </UserLayout>
-  )
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <UserLayout isLoggedIn={false}>
-          <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center justify-center bg-[var(--awave-bg)] px-4 pb-24 pt-8">
-            <Card className="w-full p-6 text-center">
-              <h2 className="mb-2 text-xl font-semibold">로그인</h2>
-              <p className="text-sm text-[var(--awave-text-light)]">잠시만 기다려 주세요…</p>
-            </Card>
-          </div>
-        </UserLayout>
-      }
-    >
-      <LoginContent />
-    </Suspense>
   )
 }

@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/lib/supabaseClient"
+import { SITE_URL, supabase } from "@/lib/supabaseClient"
 
 type AvailabilityType = 'email' | 'nickname';
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'duplicate' | 'error';
@@ -41,6 +41,7 @@ async function requestAvailability(type: AvailabilityType, value: string) {
 }
 
 const steps = [1, 2, 3];
+const EMAIL_REDIRECT_TO = `${SITE_URL}/auth/callback`
 
 export default function SignupPage() {
   const router = useRouter()
@@ -213,10 +214,6 @@ export default function SignupPage() {
     }
     setSubmitting(true)
     try {
-      const origin =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        (typeof window !== "undefined" ? window.location.origin : "")
-      const emailRedirectTo = origin ? `${origin.replace(/\/$/, "")}/auth/callback` : undefined
       const signupDraft = {
         email,
         nickname,
@@ -229,11 +226,10 @@ export default function SignupPage() {
         window.localStorage.setItem("awave.signup.draft", JSON.stringify(signupDraft))
       }
 
-      const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         options: {
-          emailRedirectTo,
-          shouldCreateUser: true,
+          emailRedirectTo: EMAIL_REDIRECT_TO,
           data: { signupDraft },
         },
       })

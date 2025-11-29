@@ -81,6 +81,10 @@ export async function POST(request: Request) {
     const { error } = await supabaseAdmin.from(profileTable).insert(insertPayload)
 
     if (error) {
+      const friendly =
+        (error as any)?.code === "23505"
+          ? "이미 등록된 프로필이 있습니다."
+          : error.message || "프로필 생성 중 오류가 발생했습니다."
       console.error("[create-profile] insert error", {
         message: error.message,
         details: (error as any)?.details,
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
         code: (error as any)?.code,
       })
       return NextResponse.json(
-        { message: error.message || "프로필 생성 중 오류가 발생했습니다." },
+        { message: friendly },
         { status: 500 }
       )
     }
