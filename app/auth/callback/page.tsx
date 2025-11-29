@@ -15,6 +15,8 @@ function CallbackContent() {
   const [status, setStatus] = useState<Status>("checking")
   const [message, setMessage] = useState("세션을 확인하고 있어요...")
   const [profileStatus, setProfileStatus] = useState<Status>("checking")
+  const errorCode = searchParams.get("error_code")
+  const errorDescription = searchParams.get("error_description")
 
   useEffect(() => {
     let active = true
@@ -23,6 +25,45 @@ function CallbackContent() {
       const redirectTarget = nextParam === "/home" ? "/home" : "/feed"
 
       try {
+        const draftKey = "awave.signup.draft"
+        const draftRaw = typeof window !== "undefined" ? window.localStorage.getItem(draftKey) : null
+
+        if (errorCode) {
+          setStatus("error")
+          setMessage(
+            errorDescription ||
+              (errorCode === "otp_expired"
+                ? "매직링크가 만료되었어요. 새 링크를 요청해 주세요."
+                : "매직링크를 확인할 수 없습니다. 다시 시도해 주세요.")
+          )
+
+          if (errorCode === "otp_expired" && draftRaw) {
+            try {
+              const draft = JSON.parse(draftRaw) as { email?: string }
+              const origin =
+                process.env.NEXT_PUBLIC_SITE_URL ||
+                (typeof window !== "undefined" ? window.location.origin : "")
+              const emailRedirectTo = origin
+                ? `${origin.replace(/\/$/, "")}/auth/callback?next=${encodeURIComponent(
+                    redirectTarget
+                  )}`
+                : undefined
+
+              if (draft?.email) {
+                await supabase.auth.signInWithOtp({
+                  email: draft.email,
+                  options: { emailRedirectTo, shouldCreateUser: true },
+                })
+                setMessage("새 매직링크를 보냈어요. 메일함을 확인해 주세요.")
+              }
+            } catch (resendError) {
+              console.error("[auth/callback] resend magic link failed", resendError)
+            }
+          }
+
+          return
+        }
+
         const { data, error } = await supabase.auth.getSession()
         if (error) {
           throw error
@@ -43,9 +84,6 @@ function CallbackContent() {
         if (!session) {
           throw new Error("세션 정보를 확인할 수 없습니다.")
         }
-
-        const draftKey = "awave.signup.draft"
-        const draftRaw = typeof window !== "undefined" ? window.localStorage.getItem(draftKey) : null
 
         if (draftRaw) {
           try {
