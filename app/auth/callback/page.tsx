@@ -18,6 +18,20 @@ function CallbackContent() {
   const errorCode = searchParams.get("error_code")
   const errorDescription = searchParams.get("error_description")
 
+  const parseDraft = (raw: string | null) => {
+    if (!raw) return null
+    try {
+      return JSON.parse(raw) as {
+        email?: string
+        nickname?: string
+        interest?: string[]
+        region?: string[]
+      }
+    } catch {
+      return null
+    }
+  }
+
   useEffect(() => {
     let active = true
     const handleSession = async () => {
@@ -27,6 +41,7 @@ function CallbackContent() {
       try {
         const draftKey = "awave.signup.draft"
         const draftRaw = typeof window !== "undefined" ? window.localStorage.getItem(draftKey) : null
+        const localDraft = parseDraft(draftRaw)
 
         if (errorCode) {
           setStatus("error")
@@ -39,7 +54,7 @@ function CallbackContent() {
 
           if (errorCode === "otp_expired" && draftRaw) {
             try {
-              const draft = JSON.parse(draftRaw) as { email?: string }
+              const draft = localDraft
               const origin =
                 process.env.NEXT_PUBLIC_SITE_URL ||
                 (typeof window !== "undefined" ? window.location.origin : "")
@@ -85,14 +100,22 @@ function CallbackContent() {
           throw new Error("세션 정보를 확인할 수 없습니다.")
         }
 
-        if (draftRaw) {
-          try {
-            const draft = JSON.parse(draftRaw) as {
+        // Prefer local draft (same-device) and fall back to metadata from Supabase.
+        let draft = localDraft
+        if (!draft) {
+          const metaDraft = session.user.user_metadata?.signupDraft
+          if (metaDraft && typeof metaDraft === "object") {
+            draft = metaDraft as {
               email?: string
               nickname?: string
               interest?: string[]
               region?: string[]
             }
+          }
+        }
+
+        if (draft) {
+          try {
             const user = session.user
 
             if (draft?.email && draft.email === user.email) {
@@ -131,6 +154,10 @@ function CallbackContent() {
           } finally {
             if (typeof window !== "undefined") {
               window.localStorage.removeItem(draftKey)
+            }
+            // Clear metadata draft
+            if (session.user.user_metadata?.signupDraft) {
+              await supabase.auth.updateUser({ data: { signupDraft: null } })
             }
           }
         }

@@ -217,7 +217,6 @@ export default function SignupPage() {
         process.env.NEXT_PUBLIC_SITE_URL ||
         (typeof window !== "undefined" ? window.location.origin : "")
       const emailRedirectTo = origin ? `${origin.replace(/\/$/, "")}/auth/callback` : undefined
-
       const signupDraft = {
         email,
         nickname,
@@ -232,7 +231,11 @@ export default function SignupPage() {
 
       const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo, shouldCreateUser: true },
+        options: {
+          emailRedirectTo,
+          shouldCreateUser: true,
+          data: { signupDraft },
+        },
       })
 
       if (authError) {
