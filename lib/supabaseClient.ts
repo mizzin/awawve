@@ -33,7 +33,6 @@ const createPersistentStorage = (): SupportedStorage => {
     setItem: (key, value) => {
       window.localStorage.setItem(key, value)
       window.localStorage.setItem(`${key}-expiresAt`, String(Date.now() + THIRTY_DAYS_MS))
-      return value
     },
     removeItem: (key) => {
       window.localStorage.removeItem(key)
