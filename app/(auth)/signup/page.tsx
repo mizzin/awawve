@@ -41,7 +41,7 @@ async function requestAvailability(type: AvailabilityType, value: string) {
 }
 
 const steps = [1, 2, 3];
-const EMAIL_REDIRECT_TO = `${SITE_URL}/auth/callback`
+const EMAIL_REDIRECT_TO = `${SITE_URL}/auth/callback/`
 
 export default function SignupPage() {
   const router = useRouter()

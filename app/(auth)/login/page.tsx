@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SITE_URL, supabase } from "@/lib/supabaseClient"
 
-const EMAIL_REDIRECT_TO = `${SITE_URL}/auth/callback`
+const EMAIL_REDIRECT_TO = `${SITE_URL}/auth/callback/`
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
