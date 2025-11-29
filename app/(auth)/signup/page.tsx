@@ -246,7 +246,7 @@ export default function SignupPage() {
       const nickLabel = nickname ? `@${nickname}` : "새로운 파도"
       toast({
         title: "회원가입 신청 완료",
-        description: `${nickLabel} 님의 이메일로 매직링크를 보냈어요. 30분 이내에 메일을 열어 로그인해주세요.`,
+        description: `${nickLabel} 님의 이메일로 로그인 링크를 보냈어요. 30분 이내에 메일을 열어 로그인해주세요.`,
         duration: 3500,
         className:
           "rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] text-[var(--awave-text)]",
@@ -307,7 +307,7 @@ export default function SignupPage() {
                     className="mt-1"
                   />
                   <div className="mt-3 rounded-lg border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-3 text-sm text-[var(--awave-text)] leading-relaxed">
-                    <p className="font-medium">입력하신 이메일로 매직링크를 보내드려요.</p>
+                    <p className="font-medium">입력하신 이메일로 로그인 링크를 보내드려요.</p>
                     <p className="mt-1 text-xs">
                       받은 편지함을 확인할 수 있는 이메일을 입력해주세요. 회원가입 승인과 로그인에 사용됩니다.
                     </p>

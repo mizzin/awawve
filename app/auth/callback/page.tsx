@@ -33,8 +33,8 @@ function CallbackContent() {
           setMessage(
             errorDescription ||
               (errorCode === "otp_expired"
-                ? "매직링크가 만료되었어요. 새 링크를 요청해 주세요."
-                : "매직링크를 확인할 수 없습니다. 다시 시도해 주세요.")
+                ? "이메일 로그인 링크가 만료되었어요. 새 링크를 요청해 주세요."
+                : "로그인 링크를 확인할 수 없습니다. 다시 시도해 주세요.")
           )
 
           if (errorCode === "otp_expired" && draftRaw) {
@@ -54,7 +54,7 @@ function CallbackContent() {
                   email: draft.email,
                   options: { emailRedirectTo, shouldCreateUser: true },
                 })
-                setMessage("새 매직링크를 보냈어요. 메일함을 확인해 주세요.")
+                setMessage("새 로그인 링크를 보냈어요. 메일함을 확인해 주세요.")
               }
             } catch (resendError) {
               console.error("[auth/callback] resend magic link failed", resendError)
@@ -162,12 +162,12 @@ function CallbackContent() {
           <h2 className="mb-2 text-xl font-semibold">로그인 확인 중</h2>
           <p className="text-sm text-[var(--awave-text-light)]">
             {status === "checking"
-              ? "매직링크를 확인하고 있습니다. 잠시만 기다려주세요."
+              ? "로그인 링크를 확인하고 있습니다. 잠시만 기다려주세요."
               : message}
           </p>
           {status === "error" && (
             <p className="mt-3 text-sm text-red-600">
-              {message || "세션을 불러오지 못했습니다. 새로운 매직링크를 요청해주세요."}
+              {message || "세션을 불러오지 못했습니다. 새로운 로그인 링크를 요청해주세요."}
             </p>
           )}
         </Card>

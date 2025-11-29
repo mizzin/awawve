@@ -70,7 +70,7 @@ function LoginContent() {
         return
       }
 
-      setSuccessMessage("매직링크를 이메일로 전송했습니다. 30분 이내에 메일을 열어 로그인해 주세요.")
+      setSuccessMessage("이메일 로그인 링크를 전송했습니다. 30분 이내에 메일을 열어 로그인해 주세요.")
     } catch (err: any) {
       setError(err?.message ?? "Unknown error")
     } finally {
@@ -108,7 +108,7 @@ function LoginContent() {
               className="w-full bg-[var(--awave-button)] hover:bg-[var(--awave-button)]/90"
               disabled={loading}
             >
-              {loading ? "메일 전송 중…" : "매직링크 받기"}
+              {loading ? "메일 전송 중…" : "이메일로 로그인 링크 받기"}
             </Button>
           </form>
 
