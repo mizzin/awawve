@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createServerClient } from "@supabase/ssr"
 
 const PROFILE_TABLE = process.env.NEXT_PUBLIC_SUPABASE_PROFILE_TABLE ?? "users"
 
@@ -20,7 +20,23 @@ const normalizeArray = (value: unknown, max?: number) => {
 }
 
 export async function GET() {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    {
+      cookies: {
+        get(name) {
+          return cookies().get(name)?.value
+        },
+        set(name, value, options) {
+          cookies().set(name, value, options)
+        },
+        remove(name, options) {
+          cookies().set(name, "", { ...options, maxAge: 0 })
+        },
+      },
+    }
+  )
 
   const {
     data: { user },
@@ -60,7 +76,23 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    {
+      cookies: {
+        get(name) {
+          return cookies().get(name)?.value
+        },
+        set(name, value, options) {
+          cookies().set(name, value, options)
+        },
+        remove(name, options) {
+          cookies().set(name, "", { ...options, maxAge: 0 })
+        },
+      },
+    }
+  )
 
   const {
     data: { user },
