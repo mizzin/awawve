@@ -221,7 +221,7 @@ export default function SignupPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         options: { emailRedirectTo },
-      })
+      } as any)
 
       if (authError) {
         const friendly =
