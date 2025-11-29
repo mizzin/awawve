@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { updateProfile, uploadProfileImage } from "@/lib/profile"
-import { generateAvatarSVG, generateAvatarSet } from "@/lib/utils/avatar"
+import { generateAvatarSVG } from "@/lib/utils/avatar"
 
 import type { ProfileUser } from "./components/ProfileHeader"
 
@@ -65,7 +65,6 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
 
   const originalNickname = useMemo(() => user.nickname ?? "", [user.nickname])
   const generatedAvatar = useMemo(() => generateAvatarSVG(nickname || "?", 80), [nickname])
-  const gradientPreviews = useMemo(() => generateAvatarSet(nickname || "?", 64), [nickname])
 
   useEffect(() => {
     setNickname(user.nickname ?? "")
@@ -244,23 +243,6 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
           </div>
         </div>
 
-        <div>
-          <p className="mb-2 text-sm text-[var(--awave-text-light)]">
-            닉네임으로 자동 생성되는 기본 아바타 예시 (6가지 그라데이션)
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            {gradientPreviews.map((preview, index) => (
-              <div
-                key={index}
-                className={`relative h-16 w-full overflow-hidden rounded-xl border transition ${
-                  generatedAvatar === preview ? "border-[var(--awave-button)] ring-2 ring-[var(--awave-button)]" : "border-[var(--awave-border)]"
-                }`}
-              >
-                <Image src={preview} alt="gradient avatar preview" fill className="object-cover" sizes="64px" />
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div className="space-y-2">
