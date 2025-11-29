@@ -202,23 +202,32 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
   }
 
   return (
-    <Card className="w-full space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-lg font-semibold text-[var(--awave-text)]">프로필 수정</p>
-          <p className="text-sm text-[var(--awave-text-light)]">닉네임, 취향, 관심 지역을 업데이트하세요.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel} disabled={saving}>
+    <Card className="w-full space-y-6 bg-white p-0 shadow-none">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <p className="text-xl font-semibold text-[var(--awave-text)]">프로필 수정</p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={saving}
+            className="rounded-md border border-[#E2E6EB] px-3 py-2 text-sm font-medium text-[var(--awave-text-light)] shadow-none"
+          >
             취소
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-md bg-[#223044] px-3 py-2 text-sm font-semibold text-white shadow-none transition hover:bg-[#2f3d66] disabled:opacity-70"
+          >
             {saving ? "저장 중..." : "저장"}
           </Button>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-6 px-4 pb-6">
+        <div className="space-y-3">
         <p className="text-sm font-medium text-[var(--awave-text)]">프로필 이미지</p>
         <div className="flex items-center gap-4">
           <div className="relative h-20 w-20 overflow-hidden rounded-full border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
@@ -309,6 +318,7 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
           ))}
         </div>
         {errors.region && <p className="text-sm text-red-600">{errors.region}</p>}
+      </div>
       </div>
     </Card>
   )
