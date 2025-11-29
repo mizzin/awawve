@@ -8,6 +8,7 @@ export type ProfileUser = {
   email?: string | null
   avatarUrl?: string | null
   preferences: string[]
+  regions?: string[]
 }
 
 type ProfileHeaderProps = {

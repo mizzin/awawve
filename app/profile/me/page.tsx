@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 
@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabaseClient"
 import { useUserAccess } from "@/lib/useUserAccess"
 
+import { EditProfileForm } from "../EditProfileForm"
 import { ProfileActions } from "../components/ProfileActions"
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 
@@ -25,10 +26,22 @@ type ProfileRow = {
   email: string | null
   nickname: string | null
   interest?: string[] | string | null
+  region?: string[] | string | null
   profile_image?: string | null
 }
 
 const normalizePreferences = (raw: ProfileRow["interest"]) => {
+  if (Array.isArray(raw)) return raw.filter(Boolean)
+  if (typeof raw === "string") {
+    return raw
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
+const normalizeRegions = (raw: ProfileRow["region"]) => {
   if (Array.isArray(raw)) return raw.filter(Boolean)
   if (typeof raw === "string") {
     return raw
@@ -47,6 +60,7 @@ export default function MyProfilePage() {
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const showAuthToast = () => {
     const message = AUTH_MESSAGES[Math.floor(Math.random() * AUTH_MESSAGES.length)]
@@ -93,52 +107,58 @@ export default function MyProfilePage() {
     }
   }, [router, toast])
 
-  useEffect(() => {
+  const fetchProfile = useCallback(async () => {
     if (!sessionUser) {
       setProfileUser(null)
+      setLoadingProfile(false)
+      return
+    }
+    setLoadingProfile(true)
+    const { data, error } = await supabase
+      .from(PROFILE_TABLE)
+      .select("id, email, nickname, interest, region, profile_image")
+      .eq("id", sessionUser.id)
+      .maybeSingle<ProfileRow>()
+
+    if (error) {
+      console.error("Failed to refresh profile", error)
+      toast({
+        title: "프로필을 다시 불러오지 못했어요.",
+        description: "잠시 후 다시 시도해 주세요.",
+        duration: 2500,
+        className: "rounded-xl border border-red-200 bg-red-50 text-red-800",
+      })
+      setLoadingProfile(false)
       return
     }
 
-    const fetchProfile = async () => {
-      setLoadingProfile(true)
-      const { data, error } = await supabase
-        .from(PROFILE_TABLE)
-        .select("id, email, nickname, interest, profile_image")
-        .eq("id", sessionUser.id)
-        .maybeSingle<ProfileRow>()
-
-      if (error) {
-        console.error("Failed to load profile", error)
-        toast({
-          title: "프로필을 불러오지 못했어요.",
-          description: "잠시 후 다시 시도해 주세요.",
-          duration: 2500,
-          className: "rounded-xl border border-red-200 bg-red-50 text-red-800",
-        })
-        setProfileUser(null)
-        setLoadingProfile(false)
-        return
-      }
-
-      if (!data) {
-        setProfileUser(null)
-        setLoadingProfile(false)
-        return
-      }
-
-      const preferences = normalizePreferences(data.interest)
-      setProfileUser({
-        id: data.id,
-        nickname: data.nickname ?? data.email ?? "awave user",
-        email: data.email,
-        avatarUrl: data.profile_image ?? null,
-        preferences,
-      })
+    if (!data) {
+      setProfileUser(null)
       setLoadingProfile(false)
+      return
+    }
+
+    setProfileUser({
+      id: data.id,
+      nickname: data.nickname ?? data.email ?? "awave user",
+      email: data.email,
+      avatarUrl: data.profile_image ?? null,
+      preferences: normalizePreferences(data.interest),
+      regions: normalizeRegions(data.region),
+    })
+    setLoadingProfile(false)
+  }, [sessionUser, toast])
+
+  useEffect(() => {
+    if (!sessionUser) {
+      setProfileUser(null)
+      setEditing(false)
+      setLoadingProfile(false)
+      return
     }
 
     void fetchProfile()
-  }, [sessionUser, toast])
+  }, [sessionUser, fetchProfile])
 
   const handleLogout = async () => {
     setSigningOut(true)
@@ -172,7 +192,32 @@ export default function MyProfilePage() {
             <p className="mt-1 text-[var(--awave-text-light)]">잠시만 기다려주세요.</p>
           </div>
         ) : profileUser ? (
-          <ProfileHeader user={profileUser} showEmail />
+          editing ? (
+            <EditProfileForm
+              user={profileUser}
+              onCancel={() => setEditing(false)}
+              onSaved={async () => {
+                await fetchProfile()
+                setEditing(false)
+              }}
+            />
+          ) : (
+            <ProfileHeader
+              user={profileUser}
+              showEmail
+              rightSlot={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full border-[var(--awave-border)]"
+                  onClick={() => setEditing(true)}
+                  disabled={!isLoggedIn || isLocked}
+                >
+                  프로필 수정
+                </Button>
+              }
+            />
+          )
         ) : (
           <div className="rounded-xl border border-dashed border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">
             <p className="font-semibold text-[var(--awave-text)]">프로필 정보가 없습니다.</p>
