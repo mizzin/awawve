@@ -27,6 +27,7 @@ export default function FeedPage() {
   const { toast } = useToast()
   const [sessionUser, setSessionUser] = useState<User | null>(null)
   const [profileName, setProfileName] = useState<string | null>(null)
+  const [profileFetched, setProfileFetched] = useState(false)
   const lastGreetedUserIdRef = useRef<string | null>(null)
   const isLocked = false
   const lockReason = null
@@ -39,12 +40,16 @@ export default function FeedPage() {
     const syncSession = async () => {
       const { data } = await supabase.auth.getSession()
       setSessionUser(data.session?.user ?? null)
+      setProfileFetched(false)
+      setProfileName(null)
     }
     void syncSession()
     const {
       data: authListener,
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSessionUser(session?.user ?? null)
+      setProfileFetched(false)
+      setProfileName(null)
     })
     return () => {
       authListener.subscription.unsubscribe()
@@ -52,8 +57,7 @@ export default function FeedPage() {
   }, [])
 
   useEffect(() => {
-    if (!sessionUser) {
-      setProfileName(null)
+    if (!sessionUser?.id) {
       return
     }
 
@@ -66,14 +70,15 @@ export default function FeedPage() {
 
       const nickname = data?.nickname ?? data?.email ?? null
       setProfileName(nickname)
+      setProfileFetched(true)
     }
 
     void fetchProfile()
   }, [sessionUser])
 
   useEffect(() => {
-    if (sessionUser?.id && lastGreetedUserIdRef.current !== sessionUser.id) {
-      const name = profileName ? `@${profileName}` : "awave"
+    if (sessionUser?.id && profileFetched && lastGreetedUserIdRef.current !== sessionUser.id) {
+      const name = profileName ? `@${profileName}` : sessionUser.email ?? "awave"
       toast({
         title: `${name}님, awave에 오신 걸 환영해요 🌊`,
         duration: 2500,
@@ -86,7 +91,7 @@ export default function FeedPage() {
     if (!sessionUser) {
       lastGreetedUserIdRef.current = null
     }
-  }, [profileName, sessionUser, toast])
+  }, [profileFetched, profileName, sessionUser, toast])
 
   const showAuthToast = useCallback(() => {
     const message = TOAST_MESSAGES[Math.floor(Math.random() * TOAST_MESSAGES.length)]
