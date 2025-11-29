@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import { generateAvatarSVG } from "@/lib/utils/avatar"
 
 type ReactionKey = "like" | "funny" | "dislike"
 
@@ -143,6 +144,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
 
   const commentCount = feed.commentCount ?? 0
   const totalReactions = (feed.reactions?.like ?? 0) + (feed.reactions?.funny ?? 0) + (feed.reactions?.dislike ?? 0)
+  const avatarSrc = feed.author.avatarUrl ?? generateAvatarSVG(feed.author.nickname, 40)
 
   return (
     <article
@@ -158,13 +160,10 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="size-10">
-            {feed.author.avatarUrl ? (
-              <AvatarImage src={feed.author.avatarUrl} alt={feed.author.nickname} className="object-cover" />
-            ) : (
-              <AvatarFallback className="bg-[var(--awave-secondary)] text-sm font-semibold text-[var(--awave-text)]">
-                {feed.author.nickname.slice(0, 1).toUpperCase()}
-              </AvatarFallback>
-            )}
+            <AvatarImage src={avatarSrc} alt={feed.author.nickname} className="object-cover" />
+            <AvatarFallback className="bg-[var(--awave-secondary)] text-sm font-semibold text-[var(--awave-text)]">
+              {feed.author.nickname.slice(0, 1).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div>
             <p className="text-sm font-semibold text-[var(--awave-text)]">@{feed.author.nickname}</p>

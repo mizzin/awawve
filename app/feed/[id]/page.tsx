@@ -9,6 +9,7 @@ import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { generateAvatarSVG } from "@/lib/utils/avatar"
 
 type ReactionKey = "like" | "funny" | "dislike"
 
@@ -165,7 +166,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
           <div className="flex items-center gap-3">
             <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
               <Image
-                src={post.author.avatarUrl}
+                src={post.author.avatarUrl ?? generateAvatarSVG(post.author.nickname, 36)}
                 alt={`${post.author.nickname} avatar`}
                 fill
                 className="object-cover"
@@ -288,7 +289,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
               <div key={comment.id} className="flex gap-3">
                 <div className="relative mt-1 h-8 w-8 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
                   <Image
-                    src={comment.user.avatarUrl}
+                    src={comment.user.avatarUrl ?? generateAvatarSVG(comment.user.nickname, 32)}
                     alt={`${comment.user.nickname} profile`}
                     fill
                     className="object-cover"

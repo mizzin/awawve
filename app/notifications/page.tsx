@@ -5,6 +5,7 @@ import { Bell } from "lucide-react"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { generateAvatarSVG } from "@/lib/utils/avatar"
 
 type NotificationItem = {
   id: number
@@ -87,17 +88,14 @@ export default function NotificationsPage() {
                 }`}
               >
                 <Avatar className="h-8 w-8">
-                  {notification.avatarUrl ? (
-                    <AvatarImage
-                      src={notification.avatarUrl}
-                      alt={notification.user}
-                      className="object-cover"
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-[var(--awave-secondary)] text-sm font-semibold text-[var(--awave-text)]">
-                      {notification.user.slice(0, 1).toUpperCase()}
-                    </AvatarFallback>
-                  )}
+                  <AvatarImage
+                    src={notification.avatarUrl ?? generateAvatarSVG(notification.user, 32)}
+                    alt={notification.user}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-[var(--awave-secondary)] text-sm font-semibold text-[var(--awave-text)]">
+                    {notification.user.slice(0, 1).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-1 flex-col gap-1">
                   <div className="text-sm">

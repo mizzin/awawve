@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { updateProfile, uploadProfileImage } from "@/lib/profile"
+import { generateAvatarSVG, generateAvatarSet } from "@/lib/utils/avatar"
 
 import type { ProfileUser } from "./components/ProfileHeader"
 
@@ -59,22 +60,12 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
   const [errors, setErrors] = useState<Partial<Record<ErrorField, string>>>({})
   const [saving, setSaving] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
   const [removeImage, setRemoveImage] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl ?? null)
 
   const originalNickname = useMemo(() => user.nickname ?? "", [user.nickname])
-  const presetAvatars = useMemo(
-    () => [
-      "https://images.unsplash.com/photo-1500048993953-d23a436266cf?auto=format&fit=crop&w=240&q=80",
-      "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=240&q=80",
-      "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=240&q=80",
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=240&q=80",
-      "https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&w=240&q=80",
-      "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=240&q=80",
-    ],
-    []
-  )
+  const generatedAvatar = useMemo(() => generateAvatarSVG(nickname || "?", 80), [nickname])
+  const gradientPreviews = useMemo(() => generateAvatarSet(nickname || "?", 64), [nickname])
 
   useEffect(() => {
     setNickname(user.nickname ?? "")
@@ -84,7 +75,6 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
     setAvailabilityMessage(undefined)
     setErrors({})
     setSelectedFile(null)
-    setSelectedPreset(null)
     setRemoveImage(false)
     setAvatarPreview(user.avatarUrl ?? null)
   }, [user])
@@ -145,21 +135,12 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
     const file = event.target.files?.[0]
     if (!file) return
     setSelectedFile(file)
-    setSelectedPreset(null)
     setRemoveImage(false)
     setAvatarPreview(URL.createObjectURL(file))
   }
 
-  const handleSelectPreset = (url: string) => {
-    setSelectedPreset(url)
-    setSelectedFile(null)
-    setRemoveImage(false)
-    setAvatarPreview(url)
-  }
-
   const handleRemoveImage = () => {
     setSelectedFile(null)
-    setSelectedPreset(null)
     setRemoveImage(true)
     setAvatarPreview(null)
   }
@@ -192,8 +173,6 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
 
       if (removeImage) {
         profileImage = null
-      } else if (selectedPreset) {
-        profileImage = selectedPreset
       } else if (selectedFile) {
         profileImage = await uploadProfileImage(selectedFile, user.id)
       }
@@ -244,19 +223,13 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
         <p className="text-sm font-medium text-[var(--awave-text)]">프로필 이미지</p>
         <div className="flex items-center gap-4">
           <div className="relative h-20 w-20 overflow-hidden rounded-full border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
-            {avatarPreview ? (
-              <Image
-                src={avatarPreview}
-                alt="프로필 미리보기"
-                fill
-                className="object-cover"
-                sizes="80px"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-[var(--awave-text-light)]">
-                기본
-              </div>
-            )}
+            <Image
+              src={avatarPreview ?? generatedAvatar}
+              alt="프로필 미리보기"
+              fill
+              className="object-cover"
+              sizes="80px"
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             <label className="cursor-pointer">
@@ -272,23 +245,20 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-[var(--awave-text-light)]">기본 이미지 선택</p>
+          <p className="mb-2 text-sm text-[var(--awave-text-light)]">
+            닉네임으로 자동 생성되는 기본 아바타 예시 (6가지 그라데이션)
+          </p>
           <div className="grid grid-cols-3 gap-3">
-            {presetAvatars.map((url) => {
-              const active = avatarPreview === url
-              return (
-                <button
-                  key={url}
-                  type="button"
-                  onClick={() => handleSelectPreset(url)}
-                  className={`relative h-20 w-full overflow-hidden rounded-xl border transition ${
-                    active ? "border-[var(--awave-button)] ring-2 ring-[var(--awave-button)]" : "border-[var(--awave-border)]"
-                  }`}
-                >
-                  <Image src={url} alt="preset avatar" fill className="object-cover" sizes="80px" />
-                </button>
-              )
-            })}
+            {gradientPreviews.map((preview, index) => (
+              <div
+                key={index}
+                className={`relative h-16 w-full overflow-hidden rounded-xl border transition ${
+                  generatedAvatar === preview ? "border-[var(--awave-button)] ring-2 ring-[var(--awave-button)]" : "border-[var(--awave-border)]"
+                }`}
+              >
+                <Image src={preview} alt="gradient avatar preview" fill className="object-cover" sizes="64px" />
+              </div>
+            ))}
           </div>
         </div>
       </div>

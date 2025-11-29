@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { generateAvatarSVG } from "@/lib/utils/avatar"
 
 export type ProfileUser = {
   id: string
@@ -19,19 +20,17 @@ type ProfileHeaderProps = {
 
 export function ProfileHeader({ user, showEmail, rightSlot }: ProfileHeaderProps) {
   const tags = user.preferences.slice(0, 5)
+  const avatarSrc = user.avatarUrl ?? generateAvatarSVG(user.nickname, 72)
 
   return (
     <section className="rounded-xl border border-[var(--awave-border)] bg-white p-6 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="size-[72px]">
-            {user.avatarUrl ? (
-              <AvatarImage src={user.avatarUrl} alt={user.nickname} className="object-cover" />
-            ) : (
-              <AvatarFallback className="bg-[var(--awave-secondary)] text-xl font-semibold text-[var(--awave-text)]">
-                {user.nickname.slice(0, 1).toUpperCase()}
-              </AvatarFallback>
-            )}
+            <AvatarImage src={avatarSrc} alt={user.nickname} className="object-cover" />
+            <AvatarFallback className="bg-[var(--awave-secondary)] text-xl font-semibold text-[var(--awave-text)]">
+              {user.nickname.slice(0, 1).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div className="space-y-1">
             <p className="text-xl font-semibold text-[var(--awave-text)]">@{user.nickname}</p>
