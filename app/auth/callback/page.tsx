@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import UserLayout from "@/app/layout/UserLayout"
@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabaseClient"
 
 type Status = "checking" | "error"
 
-export default function AuthCallbackPage() {
+function CallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<Status>("checking")
@@ -81,5 +81,24 @@ export default function AuthCallbackPage() {
         </Card>
       </div>
     </UserLayout>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <UserLayout isLoggedIn={false}>
+          <div className="mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-md items-center justify-center bg-[var(--awave-bg)] px-4 pb-24 pt-10">
+            <Card className="w-full p-6 text-center">
+              <h2 className="mb-2 text-xl font-semibold">로그인 확인 중</h2>
+              <p className="text-sm text-[var(--awave-text-light)]">잠시만 기다려 주세요…</p>
+            </Card>
+          </div>
+        </UserLayout>
+      }
+    >
+      <CallbackContent />
+    </Suspense>
   )
 }
