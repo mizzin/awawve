@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabaseClient"
 import { getProfile } from "@/lib/profile"
 import { useUserAccess } from "@/lib/useUserAccess"
+import { normalizeRegion } from "@/lib/utils/region"
 
 import { EditProfileForm } from "../EditProfileForm"
 import { ProfileActions } from "../components/ProfileActions"
@@ -20,17 +21,6 @@ import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 const profileFeeds: FeedCardData[] = []
 const profileActions: { label: string; message: string }[] = []
 const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 완료하고 함께 즐겨보세요 🌊"] as const
-const normalizeArray = (raw: string[] | string | null | undefined) => {
-  if (Array.isArray(raw)) return raw.filter(Boolean)
-  if (typeof raw === "string") {
-    return raw
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean)
-  }
-  return []
-}
-
 export default function MyProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -104,8 +94,15 @@ export default function MyProfilePage() {
         nickname: data.nickname ?? data.email ?? "awave user",
         email: data.email,
         avatarUrl: data.profile_image ?? null,
-        preferences: normalizeArray(data.interest),
-        regions: normalizeArray(data.region),
+        preferences: Array.isArray(data.interest)
+          ? data.interest.filter(Boolean)
+          : typeof data.interest === "string"
+            ? data.interest
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean)
+            : [],
+        regions: normalizeRegion(data.region),
       })
     } catch (error) {
       console.error("Failed to refresh profile", error)

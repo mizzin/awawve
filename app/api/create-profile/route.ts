@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
+import { normalizeRegion } from "@/lib/utils/region"
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const profileTable = process.env.SUPABASE_PROFILE_TABLE ?? "users"
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     const interest = toStringArray(body.interest)
-    const region = toStringArray(body.region)
+    const region = normalizeRegion(body.region)
 
     const insertPayload = {
       id,

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
 
+import { normalizeRegion } from "@/lib/utils/region"
+
 const PROFILE_TABLE = process.env.NEXT_PUBLIC_SUPABASE_PROFILE_TABLE ?? "users"
 
 const normalizeArray = (value: unknown, max?: number) => {
@@ -85,7 +87,10 @@ export async function GET(request: Request) {
     )
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json({
+    ...data,
+    region: normalizeRegion(data.region),
+  })
 }
 
 export async function PATCH(request: Request) {
@@ -107,14 +112,14 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => ({}))
   const nickname = typeof body.nickname === "string" ? body.nickname : undefined
   const interest = normalizeArray(body.interest, 5)
-  const region = normalizeArray(body.region)
+  const region = normalizeRegion(body.region)
   const profile_image =
     body.profile_image === null ? null : typeof body.profile_image === "string" ? body.profile_image : undefined
 
   const payload: Record<string, any> = {}
   if (nickname !== undefined) payload.nickname = nickname
   if (interest) payload.interest = interest
-  if (region) payload.region = region
+  payload.region = region
   if (profile_image !== undefined) payload.profile_image = profile_image
 
   if (Object.keys(payload).length === 0) {

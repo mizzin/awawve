@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient"
+import { normalizeRegion } from "./utils/region"
 
 export type ProfileResponse = {
   id: string
@@ -47,7 +48,8 @@ export async function updateProfile(payload: {
     throw new Error((result as any)?.message ?? "프로필 업데이트에 실패했습니다.")
   }
 
-  return (await response.json()) as ProfileResponse
+  const result = (await response.json()) as ProfileResponse
+  return { ...result, region: normalizeRegion(result.region) }
 }
 
 export async function uploadProfileImage(file: File, userId: string) {
