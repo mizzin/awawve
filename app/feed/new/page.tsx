@@ -109,7 +109,7 @@ export default function NewFeedPage() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
   const [location, setLocation] = useState<SelectedLocation | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { isLocked, isAuthenticated, lockReason } = useUserAccess(1)
+  const { isLocked, isAuthenticated, lockReason, authUser } = useUserAccess(1)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -170,15 +170,22 @@ export default function NewFeedPage() {
     try {
       const uploadedImageUrl = media?.file ? await uploadFeedImage(media.file) : null
 
-      // TODO: Replace with Supabase insert for feed creation.
-      console.info("게시물 데이터", {
-        body,
-        tag: selectedTag,
-        location,
-        imageUrl: uploadedImageUrl,
+      const userId = authUser?.id
+      if (!userId) {
+        throw new Error("로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.")
+      }
+
+      const { error } = await supabase.from("feeds").insert({
+        user_id: userId,
+        content: body.trim(),
+        image_url: uploadedImageUrl,
+        // Additional fields left as defaults (counts, flags, timestamps)
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 600))
+      if (error) {
+        throw new Error(error.message ?? "피드를 저장하는 중 오류가 발생했습니다.")
+      }
+
       router.push("/feed")
     } catch (error) {
       console.error(error)

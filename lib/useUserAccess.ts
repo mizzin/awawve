@@ -95,6 +95,7 @@ export function useUserAccess(userId = 1, requiredLevel?: number) {
 
   return {
     user,
+    authUser,
     pendingReports,
     loading,
     error,
