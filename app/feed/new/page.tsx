@@ -128,6 +128,12 @@ export default function NewFeedPage() {
   }, [media?.preview])
 
   const remainingCount = MAX_CHAR_COUNT - body.length
+  console.log({
+    body,
+    isSubmitting,
+    isLocked,
+    isAuthenticated,
+  })
   const canSubmit = body.trim().length > 0 && !isSubmitting && !isLocked && isAuthenticated
 
   const handleBodyChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
