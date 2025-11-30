@@ -394,7 +394,12 @@ export default function NewFeedPage() {
               <Button
                 type="submit"
                 disabled={!canSubmit}
-                className="w-full rounded-xl bg-[var(--awave-primary)] py-6 text-base font-semibold text-white shadow-lg transition hover:opacity-90 disabled:bg-[var(--awave-text-light)]"
+                className={cn(
+                  "w-full rounded-xl py-6 text-base font-semibold shadow-lg transition",
+                  canSubmit
+                    ? "bg-[#223044] text-white hover:bg-[#2f3d66]"
+                    : "bg-[var(--awave-text-light)] text-white"
+                )}
               >
                 {isSubmitting ? (
                   <span className="flex items-center justify-center gap-2">
