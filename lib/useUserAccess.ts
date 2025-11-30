@@ -1,24 +1,28 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import type { User } from "@supabase/supabase-js"
 
+import { supabase } from "./supabaseClient"
 import { mockApi, mockApiAvailable, type ReportRow, type UserRecord } from "./mockApi"
 
-export function useUserAccess(userId = 1) {
+export function useUserAccess(userId = 1, requiredLevel?: number) {
   const [user, setUser] = useState<UserRecord | null>(null)
   const [pendingReports, setPendingReports] = useState<ReportRow[]>([])
-  const [loading, setLoading] = useState(true)
+  const [mockLoading, setMockLoading] = useState(true)
+  const [authUser, setAuthUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = useCallback(async () => {
+  const fetchMockData = useCallback(async () => {
     if (!mockApiAvailable) {
       setUser(null)
       setPendingReports([])
-      setError("모의 API가 설정되지 않았습니다. NEXT_PUBLIC_MOCK_API를 설정하거나 백엔드를 연결하세요.")
-      setLoading(false)
+      setError(null)
+      setMockLoading(false)
       return
     }
-    setLoading(true)
+    setMockLoading(true)
     try {
       const [userData, pending] = await Promise.all([
         mockApi.getUser(userId),
@@ -33,20 +37,47 @@ export function useUserAccess(userId = 1) {
       setUser(null)
       setPendingReports([])
     } finally {
-      setLoading(false)
+      setMockLoading(false)
     }
   }, [userId])
 
   useEffect(() => {
-    void fetchData()
-  }, [fetchData])
+    void fetchMockData()
+  }, [fetchMockData])
+
+  useEffect(() => {
+    const syncAuth = async () => {
+      const { data, error } = await supabase.auth.getSession()
+      if (error) {
+        setAuthUser(null)
+      } else {
+        setAuthUser(data.session?.user ?? null)
+      }
+      setAuthLoading(false)
+    }
+    void syncAuth()
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null)
+    })
+    return () => {
+      data.subscription.unsubscribe()
+    }
+  }, [])
+
+  const meetsLevel = useMemo(() => {
+    if (requiredLevel === undefined || requiredLevel === null) return true
+    if (!user?.level) return false
+    return user.level >= requiredLevel
+  }, [requiredLevel, user?.level])
 
   const isLocked = useMemo(() => {
     if (!user) return false
     return user.accountState === "locked" || pendingReports.length > 0
   }, [pendingReports.length, user])
 
-  const isAuthenticated = Boolean(user)
+  const isAuthenticated = Boolean(authUser) && meetsLevel
+  const loading = authLoading || mockLoading
 
   const lockReason = user?.lockReason ?? (pendingReports.length > 0 ? "신고 접수로 검토 중입니다." : null)
 
@@ -58,6 +89,6 @@ export function useUserAccess(userId = 1) {
     isLocked,
     isAuthenticated,
     lockReason,
-    refresh: fetchData,
+    refresh: fetchMockData,
   }
 }
