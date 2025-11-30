@@ -14,12 +14,20 @@ import { cn } from "@/lib/utils"
 
 const TOAST_MESSAGES = ["로그인 후 파도에 함께 타보세요 🌊", "회원가입 후 좀 더 즐겨보세요 🌊"] as const
 
-const FEEDS: FeedCardData[] = []
 const PROFILE_TABLE = process.env.NEXT_PUBLIC_SUPABASE_PROFILE_TABLE ?? "users"
 
 type ProfileRow = {
   nickname: string | null
   email: string | null
+}
+
+type FeedRow = {
+  id: string
+  user_id: string | null
+  content: string
+  image_url: string | null
+  created_at: string
+  users?: { id: string; nickname: string | null; profile_image: string | null } | null
 }
 
 export default function FeedPage() {
@@ -28,6 +36,8 @@ export default function FeedPage() {
   const [sessionUser, setSessionUser] = useState<User | null>(null)
   const [profileName, setProfileName] = useState<string | null>(null)
   const [profileFetched, setProfileFetched] = useState(false)
+  const [feeds, setFeeds] = useState<FeedCardData[]>([])
+  const [feedsLoading, setFeedsLoading] = useState(false)
   const lastGreetedUserIdRef = useRef<string | null>(null)
   const isLocked = false
   const lockReason = null
@@ -75,6 +85,42 @@ export default function FeedPage() {
 
     void fetchProfile()
   }, [sessionUser])
+
+  useEffect(() => {
+    const fetchFeeds = async () => {
+      setFeedsLoading(true)
+      const { data, error } = await supabase
+        .from("feeds")
+        .select("id, user_id, content, image_url, created_at, users:users(id, nickname, profile_image)")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Failed to load feeds", error)
+        setFeeds([])
+        setFeedsLoading(false)
+        return
+      }
+
+      const mapped = (data ?? []).map<FeedCardData>((item: FeedRow, index) => ({
+        id: Number.isFinite(Number(item.id)) ? Number(item.id) : index,
+        author: {
+          nickname: item.users?.nickname ?? item.user_id ?? "awave user",
+          handle: item.users?.nickname ? `@${item.users.nickname}` : item.user_id ?? undefined,
+          avatarUrl: item.users?.profile_image ?? null,
+        },
+        content: item.content,
+        imageUrl: item.image_url,
+        createdAt: item.created_at,
+        commentCount: 0,
+        reactions: { like: 0, funny: 0, dislike: 0 },
+      }))
+
+      setFeeds(mapped)
+      setFeedsLoading(false)
+    }
+
+    void fetchFeeds()
+  }, [])
 
   useEffect(() => {
     if (sessionUser?.id && profileFetched && lastGreetedUserIdRef.current !== sessionUser.id) {
@@ -137,7 +183,7 @@ export default function FeedPage() {
 
   const gatedButtonClass = cn((!sessionUser || isLocked) && "cursor-not-allowed")
 
-  const hasFeeds = FEEDS.length > 0
+  const hasFeeds = feeds.length > 0
   const isLoggedIn = Boolean(sessionUser)
 
   return (
@@ -157,8 +203,13 @@ export default function FeedPage() {
         )}
 
         <section className="flex flex-col gap-4">
-          {hasFeeds ? (
-            FEEDS.map((feed) => (
+          {feedsLoading ? (
+            <div className="rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] mt-4 px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">
+              <p className="font-semibold text-[var(--awave-text)]">피드를 불러오는 중입니다.</p>
+              <p className="mt-1 text-[var(--awave-text-light)]">잠시만 기다려주세요.</p>
+            </div>
+          ) : hasFeeds ? (
+            feeds.map((feed) => (
               <FeedCard
                 key={feed.id}
                 feed={feed}
