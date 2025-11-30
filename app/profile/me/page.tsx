@@ -94,14 +94,17 @@ export default function MyProfilePage() {
         nickname: data.nickname ?? data.email ?? "awave user",
         email: data.email,
         avatarUrl: data.profile_image ?? null,
-        preferences: Array.isArray(data.interest)
-          ? data.interest.filter(Boolean)
-          : typeof data.interest === "string"
-            ? data.interest
-                .split(",")
-                .map((item) => item.trim())
-                .filter(Boolean)
-            : [],
+        preferences: (() => {
+          const parsedInterest: string[] = (() => {
+            if (!data.interest) return []
+            if (Array.isArray(data.interest)) return data.interest
+            if (typeof data.interest === "string") {
+              return data.interest.split(",").map((i) => i.trim()).filter(Boolean)
+            }
+            return []
+          })()
+          return parsedInterest
+        })(),
         regions: normalizeRegion(data.region),
       })
     } catch (error) {
