@@ -127,6 +127,15 @@ export default function NewFeedPage() {
     }
   }, [media?.preview])
 
+  useEffect(() => {
+    supabase.auth.getUser().then((res) => {
+      console.log("supabase getUser:", res)
+    })
+    supabase.auth.getSession().then((res) => {
+      console.log("supabase getSession:", res)
+    })
+  }, [])
+
   const remainingCount = MAX_CHAR_COUNT - body.length
   console.log({
     body,
