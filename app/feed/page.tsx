@@ -167,7 +167,7 @@ export default function FeedPage() {
               />
             ))
           ) : (
-            <div className="rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">
+            <div className="rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] mt-4 px-4 py-10 text-center text-sm text-[var(--awave-text-light)]">
               <p className="font-semibold text-[var(--awave-text)]">존재하는 피드가 없습니다.</p>
               <p className="mt-1 text-[var(--awave-text-light)]">당신의 첫 피드로 파도를 채워주세요 🌊</p>
             </div>
