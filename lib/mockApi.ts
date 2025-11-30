@@ -22,6 +22,7 @@ export type UserRecord = {
   nickname: string
   accountState: "active" | "locked"
   lockReason: string | null
+  level?: number
 }
 
 export type AdminUserRow = UserRecord & {

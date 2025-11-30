@@ -67,7 +67,7 @@ export function useUserAccess(userId = 1, requiredLevel?: number) {
 
   const meetsLevel = useMemo(() => {
     if (requiredLevel === undefined || requiredLevel === null) return true
-    if (!user?.level) return false
+    if (typeof user?.level !== "number") return false
     return user.level >= requiredLevel
   }, [requiredLevel, user?.level])
 
