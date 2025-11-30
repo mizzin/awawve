@@ -14,6 +14,18 @@ import { getProfile } from "@/lib/profile"
 import { useUserAccess } from "@/lib/useUserAccess"
 import { normalizeRegion } from "@/lib/utils/region"
 
+const parseInterest = (value: unknown): string[] => {
+  if (!value) return []
+  if (Array.isArray(value)) return value
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
 import { EditProfileForm } from "../EditProfileForm"
 import { ProfileActions } from "../components/ProfileActions"
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
@@ -94,17 +106,7 @@ export default function MyProfilePage() {
         nickname: data.nickname ?? data.email ?? "awave user",
         email: data.email,
         avatarUrl: data.profile_image ?? null,
-        preferences: (() => {
-          const parsedInterest: string[] = (() => {
-            if (!data.interest) return []
-            if (Array.isArray(data.interest)) return data.interest
-            if (typeof data.interest === "string") {
-              return data.interest.split(",").map((i) => i.trim()).filter(Boolean)
-            }
-            return []
-          })()
-          return parsedInterest
-        })(),
+        preferences: parseInterest(data.interest),
         regions: normalizeRegion(data.region),
       })
     } catch (error) {
