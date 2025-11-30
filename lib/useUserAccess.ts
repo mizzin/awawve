@@ -47,13 +47,25 @@ export function useUserAccess(userId = 1, requiredLevel?: number) {
 
   useEffect(() => {
     const syncAuth = async () => {
-      const { data, error } = await supabase.auth.getSession()
-      if (error) {
+      try {
+        const userRes = await supabase.auth.getUser()
+        if (userRes.data.user) {
+          setAuthUser(userRes.data.user)
+          setAuthLoading(false)
+          return
+        }
+
+        const { data, error } = await supabase.auth.getSession()
+        if (error) {
+          setAuthUser(null)
+        } else {
+          setAuthUser(data.session?.user ?? null)
+        }
+      } catch {
         setAuthUser(null)
-      } else {
-        setAuthUser(data.session?.user ?? null)
+      } finally {
+        setAuthLoading(false)
       }
-      setAuthLoading(false)
     }
     void syncAuth()
 
