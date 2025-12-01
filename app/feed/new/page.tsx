@@ -54,7 +54,7 @@ const loadGoogleMaps = (apiKey?: string) =>
 
     const existing = document.getElementById("google-maps-sdk") as HTMLScriptElement | null
     if (existing) {
-      existing.addEventListener("load", () => resolve(window.google ?? null))
+      existing.addEventListener("load", () => resolve((window as any).google ?? null))
       existing.addEventListener("error", () => resolve(null))
       return
     }
@@ -63,7 +63,7 @@ const loadGoogleMaps = (apiKey?: string) =>
     script.id = "google-maps-sdk"
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
     script.async = true
-    script.onload = () => resolve((window as typeof window & { google?: any }).google ?? null)
+    script.onload = () => resolve((window as any).google ?? null)
     script.onerror = () => resolve(null)
     document.head.appendChild(script)
   })
