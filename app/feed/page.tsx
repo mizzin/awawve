@@ -103,6 +103,7 @@ export default function FeedPage() {
         .select(
           `
           id,
+          user_id,
           content,
           image_url,
           created_at,
