@@ -549,24 +549,33 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
       }
       map.panTo(position)
       const text = label?.trim()
-      setPinLocation({
+      const nextLocation: SelectedLocation = {
         placeName: text || "사용자 지정 위치",
         address: text || "핀으로 지정한 위치",
         lat: Number(lat.toFixed(6)),
         lng: Number(lng.toFixed(6)),
         isCustom: true,
-      })
+      }
+      setPinLocation(nextLocation)
+      return nextLocation
     }
 
     if (selectedLocation) {
-      placeMarker(selectedLocation.lat, selectedLocation.lng, selectedLocation.address)
+      const loc = placeMarker(selectedLocation.lat, selectedLocation.lng, selectedLocation.address)
+      if (loc) {
+        onSelect(loc)
+      }
     }
 
     map.addListener("click", (event: any) => {
       const lat = event?.latLng?.lat()
       const lng = event?.latLng?.lng()
       if (lat === undefined || lng === undefined) return
-      placeMarker(lat, lng, query)
+      const loc = placeMarker(lat, lng, query)
+      if (loc) {
+        onSelect(loc)
+        onClose()
+      }
     })
   }
 
