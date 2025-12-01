@@ -108,7 +108,8 @@ export default function FeedPage() {
             item.user_id && sessionUser?.id === item.user_id
               ? profileName ?? sessionUser.email ?? joinedUser?.nickname ?? null
               : null
-          const nickname = item.author_nickname ?? joinedUser?.nickname ?? localNickname ?? maskUserId(item.user_id)
+          const nickname =  item.nickname ??  item.author_nickname ??   joinedUser?.nickname ??localNickname ??maskUserId(item.user_id)
+
           const avatar = item.author_profile_image ?? joinedUser?.profile_image ?? null
           const id = item.id ? `${item.id}` : `${index}`
           return {
