@@ -37,6 +37,10 @@ async function createClient(request: Request) {
 export async function GET(request: Request) {
   const supabase = await createClient(request)
 
+  const maskUserId = (userId: string | null) => (userId ? `익명-${userId.slice(0, 4)}` : "익명")
+  const resolveNickname = (nickname: string | null | undefined, userId: string | null) =>
+    nickname?.trim() || maskUserId(userId)
+
   const { data, error } = await supabase
     .from("feeds")
     .select(
@@ -50,5 +54,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: "피드를 불러오지 못했습니다." }, { status: 500 })
   }
 
-  return NextResponse.json({ feeds: data ?? [] })
+  const feeds = (data ?? []).map((row) => {
+    const joinedUser = Array.isArray((row as any).users) ? (row as any).users[0] : (row as any).users
+    const nickname = resolveNickname(joinedUser?.nickname, (row as any).user_id)
+    const profileImage = joinedUser?.profile_image ?? null
+
+    return {
+      ...row,
+      users: joinedUser ? { ...joinedUser, nickname, profile_image: profileImage } : null,
+      author_nickname: nickname,
+      author_profile_image: profileImage,
+    }
+  })
+
+  return NextResponse.json({ feeds })
 }

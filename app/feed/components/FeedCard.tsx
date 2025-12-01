@@ -27,7 +27,7 @@ const wiggleTransition: Transition = { duration: 0.25, ease: easeInOut }
 const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 완료하고 함께 즐겨보세요 🌊"] as const
 
 export type FeedCardData = {
-  id: number
+  id: string
   author: {
     nickname: string
     handle?: string

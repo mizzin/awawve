@@ -18,41 +18,10 @@ type NotificationItem = {
   read: boolean
 }
 
-const dummyNotifications: NotificationItem[] = [
-  {
-    id: 1,
-    type: "reaction",
-    user: "bgc_life",
-    avatarUrl: "https://i.pravatar.cc/80?img=16",
-    content: "님이 내 글에 좋아요를 눌렀습니다.",
-    feedId: 2,
-    created_at: "5분 전",
-    read: false,
-  },
-  {
-    id: 2,
-    type: "comment",
-    user: "manila_girl",
-    avatarUrl: "https://i.pravatar.cc/80?img=34",
-    content: "님이 댓글을 남겼습니다.",
-    feedId: 1,
-    created_at: "2시간 전",
-    read: true,
-  },
-  {
-    id: 3,
-    type: "reaction",
-    user: "saltbread",
-    avatarUrl: undefined,
-    content: "님이 내 글에 반응했습니다.",
-    feedId: 12,
-    created_at: "어제",
-    read: true,
-  },
-]
+const notifications: NotificationItem[] = []
 
 export default function NotificationsPage() {
-  const hasNotifications = dummyNotifications.length > 0
+  const hasNotifications = notifications.length > 0
 
   return (
     <UserLayout>
@@ -63,6 +32,7 @@ export default function NotificationsPage() {
             type="button"
             className="text-sm font-medium text-[var(--awave-button)] transition hover:opacity-80"
             onClick={() => alert("모든 알림을 읽음 처리합니다.")}
+            disabled={!hasNotifications}
           >
             모두 읽음
           </button>
@@ -79,7 +49,7 @@ export default function NotificationsPage() {
           )}
 
           {hasNotifications &&
-            dummyNotifications.map((notification) => (
+            notifications.map((notification) => (
               <Link
                 key={notification.id}
                 href={`/feed/${notification.feedId}`}

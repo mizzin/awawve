@@ -65,7 +65,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
   const [post, setPost] = useState<FeedDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const currentUserId = 1
+  const [authUserId, setAuthUserId] = useState<string | null>(null)
   const [reactionCounts, setReactionCounts] = useState<Record<ReactionKey, number>>({
     like: 0,
     funny: 0,
@@ -80,6 +80,12 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
   const closeMenu = useCallback(() => setMenuOpen(false), [])
 
   useEffect(() => {
+    const syncUser = async () => {
+      const { data } = await supabase.auth.getSession()
+      setAuthUserId(data.session?.user?.id ?? null)
+    }
+    void syncUser()
+
     const fetchFeed = async () => {
       setLoading(true)
       setError(null)
@@ -154,7 +160,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
     const newComment: Comment = {
       id: Date.now(),
       user: {
-        id: currentUserId,
+        id: authUserId ?? "me",
         nickname: "나",
         avatarUrl: null,
       },
@@ -166,7 +172,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
   }
 
   const formattedDate = useMemo(() => (post ? formatKoreanDate(post.created_at) : ""), [post])
-  const isMine = post?.author.id ? currentUserId === post.author.id : false
+  const isMine = post?.author.id && authUserId ? authUserId === post.author.id : false
 
   const menuItems = isMine
     ? [

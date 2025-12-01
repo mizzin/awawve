@@ -31,6 +31,8 @@ type FeedRow = {
     | { id: string; nickname: string | null; profile_image: string | null }
     | { id: string; nickname: string | null; profile_image: string | null }[]
     | null
+  author_nickname?: string
+  author_profile_image?: string | null
 }
 
 export default function FeedPage() {
@@ -99,14 +101,18 @@ export default function FeedPage() {
         }
 
         const payload = (await response.json()) as { feeds?: FeedRow[] }
+        const maskUserId = (userId: string | null) => (userId ? `익명-${userId.slice(0, 4)}` : "익명")
         const mapped = (payload.feeds ?? []).map<FeedCardData>((item: FeedRow, index) => {
           const joinedUser = Array.isArray(item.users) ? item.users[0] : item.users
+          const nickname = item.author_nickname ?? joinedUser?.nickname ?? maskUserId(item.user_id)
+          const avatar = item.author_profile_image ?? joinedUser?.profile_image ?? null
+          const id = item.id ? `${item.id}` : `${index}`
           return {
-            id: Number.isFinite(Number(item.id)) ? Number(item.id) : index,
+            id,
             author: {
-              nickname: joinedUser?.nickname ?? item.user_id ?? "awave user",
-              handle: joinedUser?.nickname ? `@${joinedUser.nickname}` : item.user_id ?? undefined,
-              avatarUrl: joinedUser?.profile_image ?? null,
+              nickname,
+              handle: nickname?.startsWith("익명") ? undefined : `@${nickname}`,
+              avatarUrl: avatar,
             },
             content: item.content,
             imageUrl: item.image_url,
@@ -194,7 +200,7 @@ export default function FeedPage() {
 
   return (
     <UserLayout isLoggedIn={isLoggedIn} onRequireAuth={isLocked ? showLockedToast : showAuthToast}>
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-24">
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-24 pt-4 sm:pt-5 md:pt-6">
 
         {isLocked && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
