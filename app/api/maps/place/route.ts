@@ -28,7 +28,7 @@ export async function GET(req: Request) {
           method: "GET",
           headers: {
             "X-Goog-Api-Key": apiKey,
-            "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
+"X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location",
           },
         }
       )
