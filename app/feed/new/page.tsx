@@ -54,6 +54,9 @@ const loadGoogleMaps = (apiKey?: string) =>
 
     const existing = document.getElementById("google-maps-sdk") as HTMLScriptElement | null
     if (existing) {
+      if ((window as any).google?.maps) {
+        return resolve((window as any).google)
+      }
       existing.addEventListener("load", () => resolve((window as any).google ?? null))
       existing.addEventListener("error", () => resolve(null))
       return
@@ -473,6 +476,7 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
   const mapInstanceRef = useRef<any>(null)
   const markerRef = useRef<any>(null)
   const mapsLoadedRef = useRef(false)
+  const mountedRef = useRef(false)
 
   const initializeMap = async () => {
     if (mapsLoadedRef.current) return
@@ -527,8 +531,9 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
   }
 
   useEffect(() => {
-    void initializeMap()
+    mountedRef.current = true
     return () => {
+      mountedRef.current = false
       if (markerRef.current) {
         markerRef.current.setMap(null)
         markerRef.current = null
@@ -536,6 +541,14 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
       mapInstanceRef.current = null
       mapsLoadedRef.current = false
     }
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!mountedRef.current) return
+      void initializeMap()
+    }, 40)
+    return () => clearTimeout(timer)
   }, [])
 
   return (
