@@ -46,9 +46,10 @@ const buildFeedImagePath = (file: File) => {
 }
 
 const loadGoogleMaps = (apiKey?: string) =>
-  new Promise<typeof google | null>((resolve) => {
+  new Promise<any | null>((resolve) => {
     if (typeof window === "undefined") return resolve(null)
-    if (window.google?.maps) return resolve(window.google)
+    const w = window as typeof window & { google?: any }
+    if (w.google?.maps) return resolve(w.google)
     if (!apiKey) return resolve(null)
 
     const existing = document.getElementById("google-maps-sdk") as HTMLScriptElement | null
@@ -62,7 +63,7 @@ const loadGoogleMaps = (apiKey?: string) =>
     script.id = "google-maps-sdk"
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
     script.async = true
-    script.onload = () => resolve(window.google ?? null)
+    script.onload = () => resolve((window as typeof window & { google?: any }).google ?? null)
     script.onerror = () => resolve(null)
     document.head.appendChild(script)
   })
@@ -469,8 +470,8 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
     selectedLocation?.isCustom ? selectedLocation : null
   )
   const mapRef = useRef<HTMLDivElement | null>(null)
-  const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const markerRef = useRef<google.maps.Marker | null>(null)
+  const mapInstanceRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
   const mapsLoadedRef = useRef(false)
 
   const initializeMap = async () => {
@@ -517,9 +518,9 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
       placeMarker(selectedLocation.lat, selectedLocation.lng, selectedLocation.address)
     }
 
-    map.addListener("click", (event: google.maps.MapMouseEvent) => {
-      const lat = event.latLng?.lat()
-      const lng = event.latLng?.lng()
+    map.addListener("click", (event: any) => {
+      const lat = event?.latLng?.lat()
+      const lng = event?.latLng?.lng()
       if (lat === undefined || lng === undefined) return
       placeMarker(lat, lng, query)
     })
