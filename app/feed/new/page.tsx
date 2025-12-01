@@ -47,18 +47,32 @@ const buildFeedImagePath = (file: File) => {
 
 const loadGoogleMaps = (apiKey?: string) =>
   new Promise<any | null>((resolve) => {
+    console.log("[maps] load start", apiKey ? "has-key" : "no-key")
     if (typeof window === "undefined") return resolve(null)
     const w = window as typeof window & { google?: any }
-    if (w.google?.maps) return resolve(w.google)
-    if (!apiKey) return resolve(null)
+    if (w.google?.maps) {
+      console.log("[maps] already loaded")
+      return resolve(w.google)
+    }
+    if (!apiKey) {
+      console.warn("[maps] missing api key")
+      return resolve(null)
+    }
 
     const existing = document.getElementById("google-maps-sdk") as HTMLScriptElement | null
     if (existing) {
       if ((window as any).google?.maps) {
+        console.log("[maps] existing script and google present")
         return resolve((window as any).google)
       }
-      existing.addEventListener("load", () => resolve((window as any).google ?? null))
-      existing.addEventListener("error", () => resolve(null))
+      existing.addEventListener("load", () => {
+        console.log("[maps] existing script load event")
+        resolve((window as any).google ?? null)
+      })
+      existing.addEventListener("error", () => {
+        console.error("[maps] existing script load error")
+        resolve(null)
+      })
       return
     }
 
@@ -66,8 +80,14 @@ const loadGoogleMaps = (apiKey?: string) =>
     script.id = "google-maps-sdk"
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
     script.async = true
-    script.onload = () => resolve((window as any).google ?? null)
-    script.onerror = () => resolve(null)
+    script.onload = () => {
+      console.log("[maps] script loaded")
+      resolve((window as any).google ?? null)
+    }
+    script.onerror = () => {
+      console.error("[maps] script load error")
+      resolve(null)
+    }
     document.head.appendChild(script)
   })
 
@@ -479,9 +499,13 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
   const mountedRef = useRef(false)
 
   const initializeMap = async () => {
+    console.log("[maps] init start", { mounted: mountedRef.current, loaded: mapsLoadedRef.current, hasRef: Boolean(mapRef.current) })
     if (mapsLoadedRef.current) return
     const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
-    if (!google || !mapRef.current) return
+    if (!google || !mapRef.current) {
+      console.warn("[maps] init blocked", { google: Boolean(google), hasRef: Boolean(mapRef.current) })
+      return
+    }
 
     const center = selectedLocation
       ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
@@ -496,6 +520,7 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
 
     mapInstanceRef.current = map
     mapsLoadedRef.current = true
+    console.log("[maps] map created")
 
     const placeMarker = (lat: number, lng: number, label?: string) => {
       const position = { lat, lng }
