@@ -27,13 +27,15 @@ type FeedRow = {
   content: string
   image_url: string | null
   created_at: string
-    nickname?: string | null
+  nickname?: string | null
   users?:
     | { id: string; nickname: string | null; profile_image: string | null }
     | { id: string; nickname: string | null; profile_image: string | null }[]
     | null
   author_nickname?: string
   author_profile_image?: string | null
+  feed_comments?: { id: string }[] | null
+  feed_reactions?: { reaction_type: string }[] | null
 }
 
 export default function FeedPage() {
@@ -95,46 +97,56 @@ export default function FeedPage() {
   useEffect(() => {
     const fetchFeeds = async () => {
       setFeedsLoading(true)
-      try {
-        const response = await fetch("/api/feeds", { cache: "no-store" })
-        if (!response.ok) {
-          throw new Error(`피드 API 응답이 올바르지 않습니다. (${response.status})`)
-        }
 
-        const payload = (await response.json()) as { feeds?: FeedRow[] }
-        const maskUserId = (userId: string | null) => (userId ? `익명-${userId.slice(0, 4)}` : "익명")
-        const mapped = (payload.feeds ?? []).map<FeedCardData>((item: FeedRow, index) => {
-          const joinedUser = Array.isArray(item.users) ? item.users[0] : item.users
-          const localNickname =
-            item.user_id && sessionUser?.id === item.user_id
-              ? profileName ?? sessionUser.email ?? joinedUser?.nickname ?? null
-              : null
-          const nickname =  item.nickname ??  item.author_nickname ??   joinedUser?.nickname ??localNickname ??maskUserId(item.user_id)
+      const { data, error } = await supabase
+        .from("feeds")
+        .select(
+          `
+          id,
+          content,
+          image_url,
+          created_at,
+          users:users!feeds_user_id_fkey(id, nickname, profile_image),
+          feed_comments:feed_comments(id),
+          feed_reactions:feed_reactions(reaction_type)
+        `
+        )
+        .order("created_at", { ascending: false })
 
-          const avatar = item.author_profile_image ?? joinedUser?.profile_image ?? null
-          const id = item.id ? `${item.id}` : `${index}`
-          return {
-            id,
-            author: {
-              nickname,
-              handle: nickname?.startsWith("익명") ? undefined : `@${nickname}`,
-              avatarUrl: avatar,
-            },
-            content: item.content,
-            imageUrl: item.image_url,
-            createdAt: item.created_at,
-            commentCount: 0,
-            reactions: { like: 0, funny: 0, dislike: 0 },
-          }
-        })
-
-        setFeeds(mapped)
-      } catch (error) {
-        console.error("Failed to load feeds", error)
+      if (error) {
+        console.error("feed list fetch error:", error)
         setFeeds([])
-      } finally {
         setFeedsLoading(false)
+        return
       }
+
+      const mapped = (data || []).map<FeedCardData>((item) => {
+        const joinedUser = Array.isArray(item.users) ? item.users[0] : item.users
+        const reactions = item.feed_reactions || []
+        const maskUserId = (userId: string | null) => (userId ? `익명-${userId.slice(0, 4)}` : "익명")
+        const nickname = joinedUser?.nickname?.trim() || maskUserId(item.user_id)
+
+        return {
+          id: `${item.id}`,
+          author: {
+            id: joinedUser?.id,
+            nickname,
+            avatarUrl: joinedUser?.profile_image ?? null,
+          },
+          content: item.content,
+          imageUrl: item.image_url,
+          createdAt: item.created_at,
+          commentCount: item.feed_comments?.length ?? 0,
+          reactions: {
+            like: reactions.filter((r) => r.reaction_type === "like").length,
+            funny: reactions.filter((r) => r.reaction_type === "meh" || r.reaction_type === "funny").length,
+            dislike: reactions.filter((r) => r.reaction_type === "dislike").length,
+          },
+        }
+      })
+
+      setFeeds(mapped)
+      setFeedsLoading(false)
     }
 
     void fetchFeeds()
