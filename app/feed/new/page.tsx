@@ -503,13 +503,12 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
   const mountedRef = useRef(false)
 
   const initializeMap = async () => {
-    const hasElement = mapRef.current instanceof Element
     console.log("[maps] init start", {
       mounted: mountedRef.current,
       loaded: mapsLoadedRef.current,
-      hasRef: hasElement,
+      hasRef: Boolean(mapRef.current),
     })
-    if (mapsLoadedRef.current || !hasElement) return
+    if (mapsLoadedRef.current || !mapRef.current) return
     const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
     if (!google) {
       console.warn("[maps] init blocked", { google: Boolean(google), hasRef: hasElement })
@@ -534,7 +533,6 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
     }
 
     mapInstanceRef.current = map
-    mapsLoadedRef.current = true
     console.log("[maps] map created")
 
     const placeMarker = (lat: number, lng: number, label?: string) => {
@@ -574,9 +572,11 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
       const loc = placeMarker(lat, lng, query)
       if (loc) {
         onSelect(loc)
-        onClose()
       }
     })
+
+    mapInstanceRef.current = map
+    mapsLoadedRef.current = true
   }
 
   useEffect(() => {
