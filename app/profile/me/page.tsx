@@ -30,9 +30,54 @@ import { EditProfileForm } from "../EditProfileForm"
 import { ProfileActions } from "../components/ProfileActions"
 import { ProfileHeader, type ProfileUser } from "../components/ProfileHeader"
 
-const profileFeeds: FeedCardData[] = []
 const profileActions: { label: string; message: string }[] = []
 const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 완료하고 함께 즐겨보세요 🌊"] as const
+
+const fetchMyFeeds = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("feeds")
+    .select(`
+      id,
+      user_id,
+      content,
+      image_url,
+      created_at,
+      users:users!feeds_user_id_fkey(id, nickname, profile_image),
+      feed_comments:feed_comments(id),
+      feed_reactions:feed_reactions(reaction_type)
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("failed to load my feeds:", error)
+    return []
+  }
+
+  return (data || []).map<FeedCardData>((item) => {
+    const u = Array.isArray(item.users) ? item.users[0] : item.users
+    const reactions = item.feed_reactions ?? []
+
+    return {
+      id: item.id,
+      author: {
+        id: item.user_id,
+        nickname: u?.nickname ?? "익명",
+        avatarUrl: u?.profile_image ?? null,
+      },
+      content: item.content,
+      imageUrl: item.image_url,
+      createdAt: item.created_at,
+      commentCount: item.feed_comments?.length ?? 0,
+      reactions: {
+        like: reactions.filter((r) => r.reaction_type === "like").length,
+        funny: reactions.filter((r) => r.reaction_type === "funny").length,
+        dislike: reactions.filter((r) => r.reaction_type === "dislike").length,
+      },
+    }
+  })
+}
+
 export default function MyProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
@@ -42,6 +87,7 @@ export default function MyProfilePage() {
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [profileFeeds, setProfileFeeds] = useState<FeedCardData[]>([])
 
   const showAuthToast = () => {
     const message = AUTH_MESSAGES[Math.floor(Math.random() * AUTH_MESSAGES.length)]
@@ -133,6 +179,19 @@ export default function MyProfilePage() {
 
     void fetchProfile()
   }, [sessionUser, fetchProfile])
+
+  useEffect(() => {
+    async function loadMyFeeds() {
+      const { data } = await supabase.auth.getUser()
+      const userId = data.user?.id
+      if (!userId) return
+
+      const feeds = await fetchMyFeeds(userId)
+      setProfileFeeds(feeds)
+    }
+
+    void loadMyFeeds()
+  }, [])
 
   const handleLogout = async () => {
     setSigningOut(true)
