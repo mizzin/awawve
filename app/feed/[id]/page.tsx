@@ -1,5 +1,7 @@
+"use client"
 
 import Image from "next/image"
+import { useParams } from "next/navigation"
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { MoreHorizontal, SendHorizontal } from "lucide-react"
@@ -59,7 +61,8 @@ const reactionMeta: Record<
   dislike: { label: "별로야", emoji: "😐", activeColor: "text-[var(--awave-text-light)]", bg: "bg-[var(--awave-secondary)]" },
 }
 
-export default function FeedDetailPage({ params }: { params: { id: string } }) {
+export default function FeedDetailPage() {
+  const { id } = useParams();
   const router = useRouter()
   const [post, setPost] = useState<FeedDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -93,7 +96,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
         .select(
           "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
-        .eq("id", params.id)
+        .eq("id",id)
          .in("is_deleted", [null, false]) 
         .maybeSingle<FeedRow>()
 
