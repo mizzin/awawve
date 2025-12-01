@@ -2,9 +2,10 @@
 
 import Image from "next/image"
 import { useParams } from "next/navigation"
-import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, SendHorizontal } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
+import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
@@ -61,8 +62,16 @@ const reactionMeta: Record<
   dislike: { label: "별로야", emoji: "😐", activeColor: "text-[var(--awave-text-light)]", bg: "bg-[var(--awave-secondary)]" },
 }
 
+type FloatingEmoji = {
+  id: string
+  key: ReactionKey
+  emoji: string
+  x: number
+  rise: number
+}
+
 export default function FeedDetailPage() {
-  const { id } = useParams();
+  const { id } = useParams()
   const router = useRouter()
   const [post, setPost] = useState<FeedDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -77,6 +86,7 @@ export default function FeedDetailPage() {
   const [comments, setComments] = useState<Comment[]>([])
   const [commentInput, setCommentInput] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
+  const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([])
 
   const menuRef = useRef<HTMLDivElement | null>(null)
   const closeMenu = useCallback(() => setMenuOpen(false), [])
@@ -140,7 +150,27 @@ export default function FeedDetailPage() {
     void fetchFeed()
   }, [id])
 
+  const triggerEmojiBurst = useCallback((key: ReactionKey) => {
+    const count = Math.floor(Math.random() * 3) + 3
+    const burst: FloatingEmoji[] = Array.from({ length: count }).map((_, index) => ({
+      id: `${key}-${performance.now()}-${index}`,
+      key,
+      emoji: reactionMeta[key].emoji,
+      x: (Math.random() - 0.5) * 36,
+      rise: 40 + Math.random() * 32,
+    }))
+
+    setFloatingEmojis((prev) => [...prev, ...burst])
+
+    burst.forEach((item) => {
+      window.setTimeout(() => {
+        setFloatingEmojis((prev) => prev.filter((emoji) => emoji.id !== item.id))
+      }, 950)
+    })
+  }, [])
+
   const handleReaction = (key: ReactionKey) => {
+    triggerEmojiBurst(key)
     setReactionCounts((prev) => {
       const nextCounts = { ...prev }
       if (selectedReaction === key) {
@@ -217,53 +247,53 @@ export default function FeedDetailPage() {
   return (
     <UserLayout>
       <div className="min-h-screen bg-white text-[var(--awave-text)]">
-        <main className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-48 pt-6">
-        <section className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
-              <Image
-                src={post.author.avatarUrl ?? generateAvatarSVG(post.author.nickname, 36)}
-                alt={`${post.author.nickname} avatar`}
-                fill
-                className="object-cover"
-                sizes="36px"
-                unoptimized
-              />
-            </div>
-            <div>
-              <p className="text-base font-semibold">@{post.author.nickname}</p>
-              <p className="text-xs text-[#999999]">{formattedDate}</p>
-            </div>
-          </div>
-
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--awave-border)] text-[var(--awave-text-light)] transition hover:border-[var(--awave-button)]/30"
-              onClick={() => setMenuOpen((prev) => !prev)}
-              aria-label="옵션 메뉴"
-            >
-              <MoreHorizontal className="size-5" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-12 w-36 rounded-xl border border-[var(--awave-border)] bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
-                {menuItems.map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => {
-                      item.action()
-                      setMenuOpen(false)
-                    }}
-                    className="block w-full px-4 py-2 text-left text-sm text-[var(--awave-text)] hover:bg-[var(--awave-secondary)]"
-                  >
-                    {item.label}
-                  </button>
-                ))}
+        <main className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-32 pt-6">
+          <section className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
+                <Image
+                  src={post.author.avatarUrl ?? generateAvatarSVG(post.author.nickname, 36)}
+                  alt={`${post.author.nickname} avatar`}
+                  fill
+                  className="object-cover"
+                  sizes="36px"
+                  unoptimized
+                />
               </div>
-            )}
-          </div>
-        </section>
+              <div>
+                <p className="text-base font-semibold">@{post.author.nickname}</p>
+                <p className="text-xs text-[#999999]">{formattedDate}</p>
+              </div>
+            </div>
+
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--awave-border)] text-[var(--awave-text-light)] transition hover:border-[var(--awave-button)]/30"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-label="옵션 메뉴"
+              >
+                <MoreHorizontal className="size-5" />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-12 w-36 rounded-xl border border-[var(--awave-border)] bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                  {menuItems.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => {
+                        item.action()
+                        setMenuOpen(false)
+                      }}
+                      className="block w-full px-4 py-2 text-left text-sm text-[var(--awave-text)] hover:bg-[var(--awave-secondary)]"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
 
         {post.imageUrl && (
           <div className="mt-6 overflow-hidden rounded-xl bg-[var(--awave-secondary)]">
@@ -281,115 +311,108 @@ export default function FeedDetailPage() {
           </div>
         )}
 
-        <section className="mt-6 space-y-3">
-          <p className="text-lg leading-relaxed">{post.content}</p>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--awave-text-light)]">
-            <span>작성 {formattedDate}</span>
-            <span>·</span>
-            <span>ID #{post.id}</span>
-          </div>
-        </section>
+          <section className="mt-6 space-y-3">
+            <p className="text-lg leading-relaxed">{post.content}</p>
+          </section>
 
-        <section className="mt-8 space-y-4">
-          <div className="text-sm text-[var(--awave-text-light)]">반응</div>
-          <div className="grid grid-cols-3 gap-3">
-            {(Object.keys(reactionMeta) as ReactionKey[]).map((key) => {
-              const meta = reactionMeta[key]
-              const isActive = selectedReaction === key
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleReaction(key)}
-                  className={cn(
-                    "flex flex-col items-center rounded-xl border px-3 py-3 text-sm transition",
-                    isActive
-                      ? `${meta.bg} border-transparent ${meta.activeColor} font-semibold`
-                      : "border-[var(--awave-border)] text-[var(--awave-text)]"
-                  )}
-                >
-                  <span className="text-xl">{meta.emoji}</span>
-                  <span className="mt-1">{meta.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </section>
+          <section className="mt-8 space-y-4">
+            <div className="text-sm text-[var(--awave-text-light)]">반응</div>
+            <div className="grid grid-cols-3 gap-3">
+              {(Object.keys(reactionMeta) as ReactionKey[]).map((key) => {
+                const meta = reactionMeta[key]
+                const isActive = selectedReaction === key
+                return (
+                  <div key={key} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => handleReaction(key)}
+                      className={cn(
+                        "flex w-full flex-col items-center rounded-xl border px-3 py-3 text-sm font-medium transition transform",
+                        isActive
+                          ? `${meta.bg} border-[var(--awave-button)] ring-2 ring-[var(--awave-button)] ${meta.activeColor} scale-105 shadow-[0_8px_20px_rgba(23,68,132,0.12)]`
+                          : "border-[var(--awave-border)] text-[var(--awave-text)] hover:border-[var(--awave-button)]/40 hover:shadow-[0_6px_18px_rgba(0,0,0,0.04)]"
+                      )}
+                    >
+                      <span className="text-xl">{meta.emoji}</span>
+                      <span className="mt-1">{meta.label}</span>
+                    </button>
+                    <div className="pointer-events-none absolute inset-0 overflow-visible">
+                      <AnimatePresence>
+                        {floatingEmojis
+                          .filter((item) => item.key === key)
+                          .map((item) => (
+                            <motion.span
+                              key={item.id}
+                              initial={{ opacity: 0, y: 8, scale: 0.8, x: item.x }}
+                              animate={{ opacity: 1, y: -item.rise, scale: 1 }}
+                              exit={{ opacity: 0, y: -(item.rise + 24), scale: 0.9 }}
+                              transition={{ duration: 0.9, ease: "easeOut" }}
+                              className="absolute left-1/2 top-1/2 -translate-x-1/2 text-lg"
+                            >
+                              {item.emoji}
+                            </motion.span>
+                          ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
 
-        <section className="mt-10 space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-base font-semibold">댓글 {comments.length}개</p>
-            <Button variant="ghost" size="sm" className="text-[var(--awave-button)]" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
-              모두보기
-            </Button>
-          </div>
-
-          <div className="space-y-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3">
-                <div className="relative mt-1 h-8 w-8 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
-                  <Image
-                    src={comment.user.avatarUrl ?? generateAvatarSVG(comment.user.nickname, 32)}
-                    alt={`${comment.user.nickname} profile`}
-                    fill
-                    className="object-cover"
-                    sizes="32px"
-                    unoptimized
-                  />
-                </div>
-                <div className="flex-1 rounded-xl bg-[var(--awave-secondary)] px-4 py-2">
-                  <p className="text-sm font-semibold text-[var(--awave-text)]">@{comment.user.nickname}</p>
-                  <p className="text-sm text-[var(--awave-text)]">{comment.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-[var(--awave-border)] px-3 py-2">
-            <Input
-              value={commentInput}
-              onChange={(event) => setCommentInput(event.target.value)}
-              placeholder="댓글을 남겨보세요"
-              className="border-none bg-transparent px-0 text-sm focus-visible:ring-0"
-            />
-            <Button
-              type="button"
-              size="icon"
-              className="rounded-full bg-[var(--awave-primary)] text-white"
-              disabled={!commentInput.trim()}
-              onClick={handleCommentSubmit}
-            >
-              <SendHorizontal className="size-4" />
-            </Button>
-          </div>
-        </section>
-      </main>
-
-      <footer className="fixed inset-x-0 bottom-20 border border-[var(--awave-border)] bg-white/95 px-5 py-3 shadow-lg sm:bottom-24">
-        <div className="flex gap-3">
-          {(Object.keys(reactionMeta) as ReactionKey[]).map((key) => {
-            const meta = reactionMeta[key]
-            const isActive = selectedReaction === key
-            return (
+          <section className="mt-10 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-base font-semibold">댓글 {comments.length}개</p>
               <Button
-                key={key}
-                type="button"
-                variant="outline"
-                className={cn(
-                  "flex-1 rounded-xl border px-3 py-5 text-base font-semibold",
-                  isActive
-                    ? `${meta.bg} border-transparent text-[var(--awave-primary)]`
-                    : "border-[var(--awave-border)] text-[var(--awave-text)]"
-                )}
-                onClick={() => handleReaction(key)}
+                variant="ghost"
+                size="sm"
+                className="text-[var(--awave-button)]"
+                onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}
               >
-                <span className="mr-2 text-lg">{meta.emoji}</span>
-                {meta.label}
+                모두보기
               </Button>
-            )
-          })}
-        </div>
-      </footer>
+            </div>
+
+            <div className="space-y-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3">
+                  <div className="relative mt-1 h-8 w-8 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
+                    <Image
+                      src={comment.user.avatarUrl ?? generateAvatarSVG(comment.user.nickname, 32)}
+                      alt={`${comment.user.nickname} profile`}
+                      fill
+                      className="object-cover"
+                      sizes="32px"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="flex-1 rounded-xl bg-[var(--awave-secondary)] px-4 py-2">
+                    <p className="text-sm font-semibold text-[var(--awave-text)]">@{comment.user.nickname}</p>
+                    <p className="text-sm text-[var(--awave-text)]">{comment.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="relative rounded-xl border border-[var(--awave-border)] px-3 py-2">
+              <Input
+                value={commentInput}
+                onChange={(event) => setCommentInput(event.target.value)}
+                placeholder="댓글을 남겨보세요"
+                className="border-none bg-transparent px-0 pr-16 text-sm focus-visible:ring-0"
+              />
+              {commentInput.trim() && (
+                <button
+                  type="button"
+                  onClick={handleCommentSubmit}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm font-semibold text-[var(--awave-button)] transition hover:bg-[var(--awave-secondary)]"
+                >
+                  등록
+                </button>
+              )}
+            </div>
+          </section>
+        </main>
       </div>
     </UserLayout>
   )
