@@ -65,6 +65,11 @@ type CommentRow = {
         nickname: string | null
         profile_image: string | null
       }
+    | {
+        id: string
+        nickname: string | null
+        profile_image: string | null
+      }[]
     | null
 }
 
@@ -109,8 +114,7 @@ export default function FeedDetailPage() {
   const closeMenu = useCallback(() => setMenuOpen(false), [])
 
 const mapCommentRow = useCallback((row: CommentRow): Comment => {
-  const u = Array.isArray(row.users) ? row.users[0] : row.users;
-
+  const u = Array.isArray(row.users) ? row.users[0] : row.users
 
   return {
     id: row.id,
@@ -122,7 +126,7 @@ const mapCommentRow = useCallback((row: CommentRow): Comment => {
     text: row.content,
     created_at: row.created_at,
   }
-}, []);
+}, [])
 
 
   useEffect(() => {
