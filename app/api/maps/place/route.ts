@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     // placeId 우선 처리: placeId가 있으면 디테일 조회
     // -------------------------------------------------------
     if (placeId) {
-      const detailRes = await fetch(`https://places.googleapis.com/v1/places/${placeId}?fields=id,displayName,formattedAddress,location`, {
+      const detailRes = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?fields=id,displayName,formattedAddress,location`, {
         method: "GET",
         headers: {
           "X-Goog-Api-Key": apiKey,
@@ -24,29 +24,29 @@ export async function GET(req: Request) {
         },
       })
       const detailJson = await detailRes.json()
-      if (!detailRes.ok) {
+      if (!detailRes.ok || (detailJson.status && detailJson.status !== "OK" && !detailJson.id)) {
         console.error("[maps api] place details error", detailRes.status, detailJson)
-        return NextResponse.json({ ok: false, error: "Failed to fetch place details" }, { status: 400 })
-      }
+        // fallback to lat/lng if provided
+      } else {
+        const name = detailJson?.displayName?.text ?? null
+        const address = detailJson?.formattedAddress ?? "주소 없음"
+        const latNum = detailJson?.location?.latitude ?? (lat ? Number(lat) : null)
+        const lngNum = detailJson?.location?.longitude ?? (lng ? Number(lng) : null)
 
-      const name = detailJson?.displayName?.text ?? null
-      const address = detailJson?.formattedAddress ?? "주소 없음"
-      const latNum = detailJson?.location?.latitude ?? null
-      const lngNum = detailJson?.location?.longitude ?? null
-
-      return NextResponse.json({
-        ok: true,
-        place: {
-          placeId: detailJson?.id ?? placeId,
-          name,
+        return NextResponse.json({
+          ok: true,
+          place: {
+            placeId: detailJson?.id ?? placeId,
+            name,
+            address,
+            lat: latNum,
+            lng: lngNum,
+          },
           address,
           lat: latNum,
           lng: lngNum,
-        },
-        address,
-        lat: latNum,
-        lng: lngNum,
-      })
+        })
+      }
     }
 
     if (!lat || !lng) {

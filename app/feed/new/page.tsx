@@ -583,7 +583,9 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
         console.log("[maps] POI clicked! placeId:", placeId)
         if (event.stop) event.stop()
         try {
-          const res = await fetch(`/api/maps/place?placeId=${placeId}`)
+          const paramLat = latFromEvent !== undefined ? `&lat=${latFromEvent}` : ""
+          const paramLng = lngFromEvent !== undefined ? `&lng=${lngFromEvent}` : ""
+          const res = await fetch(`/api/maps/place?placeId=${placeId}${paramLat}${paramLng}`)
           const data = await res.json()
           console.log("[maps] PLACE DETAILS:", data)
           if (data?.place) {
