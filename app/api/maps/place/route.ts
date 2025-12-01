@@ -22,16 +22,16 @@ export async function GET(req: Request) {
         fieldMask: "id,displayName,formattedAddress,location",
       })
 
-      const detailRes = await fetch(
-        `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
-        {
-          method: "GET",
-          headers: {
-            "X-Goog-Api-Key": apiKey,
-"X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location",
-          },
-        }
-      )
+     const detailRes = await fetch(
+  `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?fields=displayName,formattedAddress,location`,
+  {
+    method: "GET",
+    headers: {
+      "X-Goog-Api-Key": apiKey,
+    },
+  }
+)
+
 
       console.log("[DEBUG] Detail Status:", detailRes.status)
       const detailText = await detailRes.text()
