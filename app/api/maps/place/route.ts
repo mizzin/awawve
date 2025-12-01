@@ -5,14 +5,52 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const lat = searchParams.get("lat")
     const lng = searchParams.get("lng")
-
-    if (!lat || !lng) {
-      return NextResponse.json({ ok: false, error: "Missing lat/lng" })
-    }
+    const placeId = searchParams.get("placeId")
 
     const apiKey = process.env.GOOGLE_MAPS_API_KEY ?? process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
     if (!apiKey) {
       return NextResponse.json({ ok: false, error: "Missing Google Maps API key" })
+    }
+
+    // -------------------------------------------------------
+    // placeId 우선 처리: placeId가 있으면 디테일 조회
+    // -------------------------------------------------------
+    if (placeId) {
+      const detailRes = await fetch(`https://places.googleapis.com/v1/places/${placeId}?fields=id,displayName,formattedAddress,location`, {
+        method: "GET",
+        headers: {
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
+        },
+      })
+      const detailJson = await detailRes.json()
+      if (!detailRes.ok) {
+        console.error("[maps api] place details error", detailRes.status, detailJson)
+        return NextResponse.json({ ok: false, error: "Failed to fetch place details" }, { status: 400 })
+      }
+
+      const name = detailJson?.displayName?.text ?? null
+      const address = detailJson?.formattedAddress ?? "주소 없음"
+      const latNum = detailJson?.location?.latitude ?? null
+      const lngNum = detailJson?.location?.longitude ?? null
+
+      return NextResponse.json({
+        ok: true,
+        place: {
+          placeId: detailJson?.id ?? placeId,
+          name,
+          address,
+          lat: latNum,
+          lng: lngNum,
+        },
+        address,
+        lat: latNum,
+        lng: lngNum,
+      })
+    }
+
+    if (!lat || !lng) {
+      return NextResponse.json({ ok: false, error: "Missing lat/lng" })
     }
 
     // -------------------------------------------------------
