@@ -568,6 +568,15 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
     }
 
     map.addListener("click", async (event: any) => {
+      // 🔥 디버그용 중요 로그
+      console.log("-------------------------------------------------")
+      console.log("[DEBUG] CLICK RAW EVENT:", event)
+      console.log("[DEBUG] event.placeId:", event.placeId)
+      console.log("[DEBUG] lat:", event?.latLng?.lat?.())
+      console.log("[DEBUG] lng:", event?.latLng?.lng?.())
+      console.log("-------------------------------------------------")
+      console.log("[maps] CLICK EVENT RAW:", event)
+
       const latFromEvent = event?.latLng?.lat?.()
       const lngFromEvent = event?.latLng?.lng?.()
       const placeId = event?.placeId
