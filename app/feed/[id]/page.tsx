@@ -138,7 +138,7 @@ export default function FeedDetailPage() {
     }
 
     void fetchFeed()
-  }, [params.id])
+  }, [id])
 
   const handleReaction = (key: ReactionKey) => {
     setReactionCounts((prev) => {
