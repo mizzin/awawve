@@ -16,18 +16,28 @@ export async function GET(req: Request) {
     // placeId 우선 처리: placeId가 있으면 디테일 조회
     // -------------------------------------------------------
     if (placeId) {
-      const detailRes = await fetch(
-  `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
-  {
-    method: "GET",
-    headers: {
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
-    },
-  }
-)
+      console.log("[DEBUG] Detail URL:", `https://places.googleapis.com/v1/places/${placeId}`)
+      console.log("[DEBUG] Detail Headers OK:", {
+        apiKey: Boolean(apiKey),
+        fieldMask: "id,displayName,formattedAddress,location",
+      })
 
-      const detailJson = await detailRes.json()
+      const detailRes = await fetch(
+        `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+        {
+          method: "GET",
+          headers: {
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
+          },
+        }
+      )
+
+      console.log("[DEBUG] Detail Status:", detailRes.status)
+      const detailText = await detailRes.text()
+      console.log("[DEBUG] Detail RAW:", detailText)
+
+      const detailJson = detailText ? JSON.parse(detailText) : {}
       if (!detailRes.ok || (detailJson.status && detailJson.status !== "OK" && !detailJson.id)) {
         console.error("[maps api] place details error", detailRes.status, detailJson)
         // fallback to lat/lng if provided

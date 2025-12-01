@@ -519,8 +519,6 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
       console.warn("[maps] init blocked", { google: Boolean(google), hasRef: Boolean(mapRef.current) })
       return
     }
-    console.log("[maps] window.google?.maps", (window as any)?.google?.maps ?? null)
-
     const center = selectedLocation
       ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
       : DEFAULT_MAP_CENTER
@@ -539,8 +537,6 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
     }
 
     mapInstanceRef.current = map
-    console.log("[maps] map created")
-
     const placeMarker = (lat: number, lng: number, label?: string) => {
       const position = { lat, lng }
       if (!markerRef.current) {
@@ -572,22 +568,17 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
     }
 
     map.addListener("click", async (event: any) => {
-      console.log("[maps] CLICK EVENT RAW:", event)
-
       const latFromEvent = event?.latLng?.lat?.()
       const lngFromEvent = event?.latLng?.lng?.()
       const placeId = event?.placeId
 
-      // POI 클릭 시 placeId 우선 처리
       if (placeId) {
-        console.log("[maps] POI clicked! placeId:", placeId)
         if (event.stop) event.stop()
         try {
           const paramLat = latFromEvent !== undefined ? `&lat=${latFromEvent}` : ""
           const paramLng = lngFromEvent !== undefined ? `&lng=${lngFromEvent}` : ""
           const res = await fetch(`/api/maps/place?placeId=${placeId}${paramLat}${paramLng}`)
           const data = await res.json()
-          console.log("[maps] PLACE DETAILS:", data)
           if (data?.place) {
             const placeName = data.place.name || "사용자 지정 위치"
             const address = data.place.address || "주소 없음"
