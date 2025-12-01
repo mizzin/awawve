@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useMemo, useState, type ChangeEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -62,6 +62,7 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [removeImage, setRemoveImage] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user.avatarUrl ?? null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const originalNickname = useMemo(() => user.nickname ?? "", [user.nickname])
   const generatedAvatar = useMemo(() => generateAvatarSVG(nickname || "?", 80), [nickname])
@@ -128,6 +129,10 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
 
   const handleToggleRegion = (region: string) => {
     setRegions((prev) => (prev.includes(region) ? prev.filter((item) => item !== region) : [...prev, region]))
+  }
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click()
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -240,12 +245,16 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <label className="cursor-pointer">
-              <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-              <Button type="button" variant="outline">
-                이미지 업로드
-              </Button>
-            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button type="button" variant="outline" onClick={handleFileButtonClick}>
+              이미지 업로드
+            </Button>
             <Button type="button" variant="outline" onClick={handleRemoveImage}>
               이미지 삭제
             </Button>
