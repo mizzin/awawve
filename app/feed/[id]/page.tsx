@@ -73,6 +73,15 @@ type CommentRow = {
     | null
 }
 
+type ReactionRow = {
+  id: string
+  user_id: string
+  feed_id: string
+  reaction_type: ReactionKey
+  created_at: string
+  updated_at: string
+}
+
 const reactionMeta: Record<
   ReactionKey,
   { label: string; emoji: string; activeColor: string; bg: string }
@@ -109,15 +118,32 @@ export default function FeedDetailPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([])
   const [commentSubmitting, setCommentSubmitting] = useState(false)
+  const [reactions, setReactions] = useState<ReactionRow[]>([])
 
   const menuRef = useRef<HTMLDivElement | null>(null)
   const closeMenu = useCallback(() => setMenuOpen(false), [])
 
-const mapCommentRow = useCallback((row: CommentRow): Comment => {
-  const u = Array.isArray(row.users) ? row.users[0] : row.users
+  const fetchReactions = useCallback(async (targetFeedId: string) => {
+    const { data: reactionRows, error: reactionError } = await supabase
+      .from("feed_reactions")
+      .select("id, feed_id, user_id, reaction_type, created_at, updated_at")
+      .eq("feed_id", targetFeedId)
 
-  return {
-    id: row.id,
+    if (reactionError) {
+      console.error("[feed detail] reactions fetch error", reactionError)
+      return
+    }
+
+    if (reactionRows) {
+      setReactions(reactionRows as ReactionRow[])
+    }
+  }, [])
+
+  const mapCommentRow = useCallback((row: CommentRow): Comment => {
+    const u = Array.isArray(row.users) ? row.users[0] : row.users
+
+    return {
+      id: row.id,
     user: {
       id: row.user_id,
       nickname: u?.nickname ? u.nickname.trim() : "익명",
@@ -201,11 +227,27 @@ const mapCommentRow = useCallback((row: CommentRow): Comment => {
       setPost(mapped)
       setReactionCounts(mapped.reactions)
       void fetchComments(`${data.id}`)
+      void fetchReactions(`${data.id}`)
       setLoading(false)
     }
 
     void fetchFeed()
-  }, [feedId, mapCommentRow])
+  }, [feedId, mapCommentRow, fetchReactions])
+
+  useEffect(() => {
+    const nextCounts: Record<ReactionKey, number> = { like: 0, funny: 0, dislike: 0 }
+    reactions.forEach((reaction) => {
+      nextCounts[reaction.reaction_type] = (nextCounts[reaction.reaction_type] ?? 0) + 1
+    })
+    setReactionCounts(nextCounts)
+
+    if (authUserId) {
+      const mine = reactions.find((reaction) => reaction.user_id === authUserId)
+      setSelectedReaction(mine ? mine.reaction_type : null)
+    } else {
+      setSelectedReaction(null)
+    }
+  }, [reactions, authUserId])
 
   const triggerEmojiBurst = useCallback((key: ReactionKey) => {
     const count = Math.floor(Math.random() * 3) + 3
@@ -226,23 +268,61 @@ const mapCommentRow = useCallback((row: CommentRow): Comment => {
     })
   }, [])
 
-  const handleReaction = (key: ReactionKey) => {
-    triggerEmojiBurst(key)
-    setReactionCounts((prev) => {
-      const nextCounts = { ...prev }
-      if (selectedReaction === key) {
-        nextCounts[key] = Math.max(0, nextCounts[key] - 1)
-        setSelectedReaction(null)
-        return nextCounts
+  const handleReactionSubmit = useCallback(
+    async (key: ReactionKey) => {
+      if (!feedId) return
+
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (userError || !userData.user) {
+        alert("로그인 후 반응을 남겨주세요.")
+        console.error("[reaction] auth error", userError)
+        return
       }
 
-      if (selectedReaction) {
-        nextCounts[selectedReaction] = Math.max(0, nextCounts[selectedReaction] - 1)
+      const existing = reactions.find((reaction) => reaction.user_id === userData.user.id)
+
+      if (!existing) {
+        const { error } = await supabase
+          .from("feed_reactions")
+          .insert({
+            feed_id: feedId,
+            user_id: userData.user.id,
+            reaction_type: key,
+          })
+
+        if (error) {
+          console.error("[reaction] insert error", error)
+        } else {
+          console.info("[reaction] inserted", key)
+        }
+      } else if (existing.reaction_type === key) {
+        const { error } = await supabase.from("feed_reactions").delete().eq("id", existing.id)
+        if (error) {
+          console.error("[reaction] delete error", error)
+        } else {
+          console.info("[reaction] deleted", key)
+        }
+      } else {
+        const { error } = await supabase
+          .from("feed_reactions")
+          .update({ reaction_type: key, updated_at: new Date().toISOString() })
+          .eq("id", existing.id)
+
+        if (error) {
+          console.error("[reaction] update error", error)
+        } else {
+          console.info("[reaction] updated", existing.reaction_type, "->", key)
+        }
       }
-      nextCounts[key] = nextCounts[key] + 1
-      setSelectedReaction(key)
-      return nextCounts
-    })
+
+      await fetchReactions(feedId)
+    },
+    [feedId, reactions, fetchReactions]
+  )
+
+  const handleReaction = (key: ReactionKey) => {
+    triggerEmojiBurst(key)
+    void handleReactionSubmit(key)
   }
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
