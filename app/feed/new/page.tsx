@@ -508,12 +508,18 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
       loaded: mapsLoadedRef.current,
       hasRef: Boolean(mapRef.current),
     })
-    if (mapsLoadedRef.current || !mapRef.current) return
-    const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
-    if (!google) {
-      console.warn("[maps] init blocked", { google: Boolean(google), hasRef: hasElement })
+    if (mapsLoadedRef.current || !mapRef.current) {
+      console.log("[maps] INIT MAP", mapRef.current ?? null, mapsLoadedRef.current)
       return
     }
+    console.log("[maps] INIT MAP", mapRef.current ?? null, mapsLoadedRef.current)
+    const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
+    console.log("[maps] load result google?", Boolean(google))
+    if (!google) {
+      console.warn("[maps] init blocked", { google: Boolean(google), hasRef: Boolean(mapRef.current) })
+      return
+    }
+    console.log("[maps] window.google?.maps", (window as any)?.google?.maps ?? null)
 
     const center = selectedLocation
       ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
