@@ -15,6 +15,7 @@ import { useUserAccess } from "@/lib/useUserAccess"
 const MAX_CHAR_COUNT = 300
 const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
 const TASTE_TAGS = ["여행", "식당", "마트", "카페", "화장품", "자동차", "호텔"]
+const DEFAULT_MAP_CENTER = { lat: 14.5534, lng: 121.0445 } // BGC 기본 좌표
 
 type SelectedLocation = {
   placeName: string
@@ -43,6 +44,28 @@ const buildFeedImagePath = (file: File) => {
 
   return `feed/${dateFolder}/${uniqueSegment}.${extension}`
 }
+
+const loadGoogleMaps = (apiKey?: string) =>
+  new Promise<typeof google | null>((resolve) => {
+    if (typeof window === "undefined") return resolve(null)
+    if (window.google?.maps) return resolve(window.google)
+    if (!apiKey) return resolve(null)
+
+    const existing = document.getElementById("google-maps-sdk") as HTMLScriptElement | null
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.google ?? null))
+      existing.addEventListener("error", () => resolve(null))
+      return
+    }
+
+    const script = document.createElement("script")
+    script.id = "google-maps-sdk"
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
+    script.async = true
+    script.onload = () => resolve(window.google ?? null)
+    script.onerror = () => resolve(null)
+    document.head.appendChild(script)
+  })
 
 const compressImage = async (file: File, maxSize = 1280, quality = 0.82): Promise<File> => {
   const imageBitmap = await createImageBitmap(file)
@@ -442,34 +465,77 @@ type LocationModalProps = {
 
 function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalProps) {
   const [query, setQuery] = useState("")
-  const [pinPosition, setPinPosition] = useState<{ x: number; y: number } | null>(() =>
-    selectedLocation?.isCustom ? { x: 0.5, y: 0.5 } : null
-  )
   const [pinLocation, setPinLocation] = useState<SelectedLocation | null>(() =>
     selectedLocation?.isCustom ? selectedLocation : null
   )
+  const mapRef = useRef<HTMLDivElement | null>(null)
+  const mapInstanceRef = useRef<google.maps.Map | null>(null)
+  const markerRef = useRef<google.maps.Marker | null>(null)
+  const mapsLoadedRef = useRef(false)
 
-  const handleMapClick = (event: MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect()
-    const x = (event.clientX - rect.left) / rect.width
-    const y = (event.clientY - rect.top) / rect.height
+  const initializeMap = async () => {
+    if (mapsLoadedRef.current) return
+    const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
+    if (!google || !mapRef.current) return
 
-    const lat = 37.5665 + (0.5 - y) * 0.6
-    const lng = 126.978 + (x - 0.5) * 0.6
+    const center = selectedLocation
+      ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
+      : DEFAULT_MAP_CENTER
 
-    const label = query.trim()
+    const map = new google.maps.Map(mapRef.current, {
+      center,
+      zoom: 15,
+      disableDefaultUI: true,
+      clickableIcons: false,
+    })
 
-    const customLocation: SelectedLocation = {
-      placeName: label || "사용자 지정 위치",
-      address: label || "핀으로 지정한 위치",
-      lat: Number(lat.toFixed(6)),
-      lng: Number(lng.toFixed(6)),
-      isCustom: true,
+    mapInstanceRef.current = map
+    mapsLoadedRef.current = true
+
+    const placeMarker = (lat: number, lng: number, label?: string) => {
+      const position = { lat, lng }
+      if (!markerRef.current) {
+        markerRef.current = new google.maps.Marker({
+          position,
+          map,
+        })
+      } else {
+        markerRef.current.setPosition(position)
+      }
+      map.panTo(position)
+      const text = label?.trim()
+      setPinLocation({
+        placeName: text || "사용자 지정 위치",
+        address: text || "핀으로 지정한 위치",
+        lat: Number(lat.toFixed(6)),
+        lng: Number(lng.toFixed(6)),
+        isCustom: true,
+      })
     }
 
-    setPinPosition({ x, y })
-    setPinLocation(customLocation)
+    if (selectedLocation) {
+      placeMarker(selectedLocation.lat, selectedLocation.lng, selectedLocation.address)
+    }
+
+    map.addListener("click", (event: google.maps.MapMouseEvent) => {
+      const lat = event.latLng?.lat()
+      const lng = event.latLng?.lng()
+      if (lat === undefined || lng === undefined) return
+      placeMarker(lat, lng, query)
+    })
   }
+
+  useEffect(() => {
+    void initializeMap()
+    return () => {
+      if (markerRef.current) {
+        markerRef.current.setMap(null)
+        markerRef.current = null
+      }
+      mapInstanceRef.current = null
+      mapsLoadedRef.current = false
+    }
+  }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 px-0 pb-0">
@@ -509,26 +575,19 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
         </div>
 
         <div className="mt-5 space-y-3">
-          <div
-            onClick={handleMapClick}
-            className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]"
-          >
-            <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(255,255,255,0.2),rgba(255,255,255,0.6))]" />
-            <p className="relative z-10 text-sm font-medium text-[var(--awave-text-light)]">터치해서 핀 놓기</p>
-            {pinPosition && (
-              <MapPin
-                className="absolute -translate-x-1/2 -translate-y-full text-[var(--awave-primary)] drop-shadow-md"
-                style={{
-                  left: `${pinPosition.x * 100}%`,
-                  top: `${pinPosition.y * 100}%`,
-                }}
-              />
+          <div className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
+            <div ref={mapRef} className="absolute inset-0" />
+            {!pinLocation && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-b from-white/40 via-white/20 to-transparent text-sm font-medium text-[var(--awave-text-light)]">
+                터치해서 핀 놓기
+                <span className="mt-1 text-[10px]">BGC 기준 지도</span>
+              </div>
             )}
           </div>
-            {pinLocation && (
-              <div className="rounded-xl bg-[var(--awave-secondary)] p-3 text-sm text-[var(--awave-text)]">
-                <div className="flex items-center justify-between">
-                  <div>
+          {pinLocation && (
+            <div className="rounded-xl bg-[var(--awave-secondary)] p-3 text-sm text-[var(--awave-text)]">
+              <div className="flex items-center justify-between">
+                <div>
                     <p className="font-semibold text-[var(--awave-text)]">{pinLocation.placeName}</p>
                     <p className="text-xs text-[var(--awave-text-light)]">{pinLocation.address}</p>
                     <p className="text-xs text-[var(--awave-text-light)]">
