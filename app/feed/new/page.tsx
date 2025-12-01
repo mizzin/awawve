@@ -571,14 +571,43 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
       }
     }
 
-    map.addListener("click", (event: any) => {
-      console.log("[maps] click event", event)
+    map.addListener("click", async (event: any) => {
       const lat = event?.latLng?.lat()
       const lng = event?.latLng?.lng()
       if (lat === undefined || lng === undefined) return
-      const loc = placeMarker(lat, lng, query)
-      if (loc) {
-        onSelect(loc)
+      console.log("[maps] click!", lat, lng)
+
+      try {
+        const res = await fetch(`/api/maps/place?lat=${lat}&lng=${lng}`)
+        const data = await res.json()
+        console.log("[maps] place result:", data)
+
+        const placeName = data?.place?.name || "사용자 지정 위치"
+        const address = data?.address || data?.place?.vicinity || "주소 없음"
+
+        const loc = placeMarker(lat, lng, placeName) ?? {
+          placeName,
+          address,
+          lat: Number(lat.toFixed(6)),
+          lng: Number(lng.toFixed(6)),
+          isCustom: false,
+        }
+
+        onSelect({
+          placeName: loc.placeName ?? placeName,
+          address: loc.address ?? address,
+          lat: Number(lat.toFixed(6)),
+          lng: Number(lng.toFixed(6)),
+          isCustom: false,
+        })
+        onClose()
+      } catch (error) {
+        console.error("[maps] place fetch error", error)
+        const loc = placeMarker(lat, lng, query)
+        if (loc) {
+          onSelect(loc)
+          onClose()
+        }
       }
     })
 
