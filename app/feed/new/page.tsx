@@ -531,7 +531,7 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
         center,
         zoom: 15,
         disableDefaultUI: true,
-        clickableIcons: false,
+        clickableIcons: true,
       })
     } catch (err) {
       console.error("[maps] map init error", err)
@@ -571,45 +571,54 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
       }
     }
 
-    map.addListener("click", async (event: any) => {
-      const lat = event?.latLng?.lat()
-      const lng = event?.latLng?.lng()
-      if (lat === undefined || lng === undefined) return
-      console.log("[maps] click!", lat, lng)
+   map.addListener("click", async (event: any) => {
+      console.log("[maps] CLICK EVENT RAW:", event);
 
-      try {
-        const res = await fetch(`/api/maps/place?lat=${lat}&lng=${lng}`)
-        const data = await res.json()
-        console.log("[maps] place result:", data)
+      // 📌 POI 클릭이면 placeId가 존재함
+      if (event.placeId) {
+        console.log("[maps] POI clicked! placeId:", event.placeId);
+        event.stop(); // NOTE: default 지도 클릭 이벤트 막기
 
-        const placeName = data?.place?.name || "사용자 지정 위치"
-        const address = data?.address || data?.place?.vicinity || "주소 없음"
+        const res = await fetch(`/api/maps/place?placeId=${event.placeId}`);
+        const data = await res.json();
+        console.log("[maps] PLACE DETAILS:", data);
 
-        const loc = placeMarker(lat, lng, placeName) ?? {
-          placeName,
-          address,
-          lat: Number(lat.toFixed(6)),
-          lng: Number(lng.toFixed(6)),
-          isCustom: false,
-        }
-
-        onSelect({
-          placeName: loc.placeName ?? placeName,
-          address: loc.address ?? address,
-          lat: Number(lat.toFixed(6)),
-          lng: Number(lng.toFixed(6)),
-          isCustom: false,
-        })
-        onClose()
-      } catch (error) {
-        console.error("[maps] place fetch error", error)
-        const loc = placeMarker(lat, lng, query)
-        if (loc) {
-          onSelect(loc)
-          onClose()
+        if (data?.place) {
+          onSelect({
+            placeName: data.place.name,
+            address: data.place.formatted_address,
+            lat: data.place.geometry.location.lat,
+            lng: data.place.geometry.location.lng,
+            isCustom: false,
+          });
+          onClose();
+          return;
         }
       }
-    })
+
+      // 📌 POI 아닌 일반 지도 클릭 → 기존 처리
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+      console.log("[maps] normal click", lat, lng);
+
+      const res = await fetch(`/api/maps/place?lat=${lat}&lng=${lng}`);
+      const data = await res.json();
+
+      const placeName = data?.place?.name || "사용자 지정 위치";
+      const address = data?.address || data?.place?.vicinity || "주소 없음";
+
+      const loc = placeMarker(lat, lng, placeName);
+
+      onSelect({
+        placeName,
+        address,
+        lat: Number(lat.toFixed(6)),
+        lng: Number(lng.toFixed(6)),
+        isCustom: false,
+      });
+      onClose();
+    });
+
 
     mapInstanceRef.current = map
     mapsLoadedRef.current = true
