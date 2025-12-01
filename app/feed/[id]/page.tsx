@@ -86,7 +86,8 @@ type FloatingEmoji = {
 }
 
 export default function FeedDetailPage() {
-  const { id } = useParams()
+  const params = useParams()
+  const feedId = Array.isArray(params.id) ? params.id[0] : params.id
   const router = useRouter()
   const [post, setPost] = useState<FeedDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -107,18 +108,22 @@ export default function FeedDetailPage() {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const closeMenu = useCallback(() => setMenuOpen(false), [])
 
-  const mapCommentRow = useCallback((row: CommentRow): Comment => {
-    return {
-      id: row.id,
-      user: {
-        id: row.user_id,
-        nickname: row.users?.nickname?.trim() || "익명",
-        avatarUrl: row.users?.profile_image ?? null,
-      },
-      text: row.content,
-      created_at: row.created_at,
-    }
-  }, [])
+const mapCommentRow = useCallback((row: CommentRow): Comment => {
+  const u = Array.isArray(row.users) ? row.users[0] : row.users;
+
+
+  return {
+    id: row.id,
+    user: {
+      id: row.user_id,
+      nickname: u?.nickname ? u.nickname.trim() : "익명",
+      avatarUrl: u?.profile_image ?? null,
+    },
+    text: row.content,
+    created_at: row.created_at,
+  }
+}, []);
+
 
   useEffect(() => {
     const syncUser = async () => {
@@ -154,7 +159,7 @@ export default function FeedDetailPage() {
         .select(
           "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
-        .eq("id", id)
+        .eq("id", feedId)
         .or("is_deleted.is.null,is_deleted.eq.false")
         .maybeSingle<FeedRow>()
 
@@ -196,7 +201,7 @@ export default function FeedDetailPage() {
     }
 
     void fetchFeed()
-  }, [id, mapCommentRow])
+  }, [feedId, mapCommentRow])
 
   const triggerEmojiBurst = useCallback((key: ReactionKey) => {
     const count = Math.floor(Math.random() * 3) + 3
@@ -236,6 +241,7 @@ export default function FeedDetailPage() {
     })
   }
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleCommentSubmit = useCallback(async () => {
     const text = commentInput.trim()
     if (!text) return
@@ -257,7 +263,9 @@ export default function FeedDetailPage() {
         user_id: userData.user.id,
         content: text,
       })
-      .select("id, feed_id, user_id, content, created_at, users:users(id, nickname, profile_image)")
+      .select(
+        "id, feed_id, user_id, content, created_at, users:users!feed_comments_user_id_fkey(id, nickname, profile_image)"
+      )
       .single()
 
     if (error) {
