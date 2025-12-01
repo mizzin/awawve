@@ -1,64 +1,82 @@
 import { NextResponse } from "next/server"
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const lat = searchParams.get("lat")
-  const lng = searchParams.get("lng")
-  const placeId = searchParams.get("placeId")
-
-  const key = process.env.GOOGLE_MAPS_API_KEY
-  if (!key) {
-    return NextResponse.json({ error: "Missing Google Maps API key" }, { status: 500 })
-  }
-
   try {
-    /**
-     * ------------------------------------------------------
-     * ① placeId 가 있으면 → Place Details API 사용
-     * ------------------------------------------------------
-     */
-    if (placeId) {
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${key}`
-      const res = await fetch(url)
-      const json = await res.json()
+    const { searchParams } = new URL(req.url)
+    const lat = searchParams.get("lat")
+    const lng = searchParams.get("lng")
 
-      return NextResponse.json({
-        ok: true,
-        place: json.result ?? null,
-        address: json.result?.formatted_address ?? null,
-      })
-    }
-
-    /**
-     * ------------------------------------------------------
-     * ② placeId 가 없고 lat/lng 로 요청 → Nearby + Geocode
-     * ------------------------------------------------------
-     */
     if (!lat || !lng) {
-      return NextResponse.json({ error: "Missing lat/lng" }, { status: 400 })
+      return NextResponse.json({ ok: false, error: "Missing lat/lng" })
     }
 
-    // Nearby Search API
-    const placesURL = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=30&key=${key}`
-    const placesRes = await fetch(placesURL)
-    const placesJson = await placesRes.json()
-    const bestPlace = placesJson.results?.[0] ?? null
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ ok: false, error: "Missing Google Maps API key" })
+    }
 
-    // Reverse Geocoding API
-    const geoURL = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${key}`
-    const geoRes = await fetch(geoURL)
-    const geoJson = await geoRes.json()
-    const address = geoJson.results?.[0]?.formatted_address ?? "주소 없음"
+    // -------------------------------------------------------
+    // 1) Places API (v1) - Nearby Search
+    // -------------------------------------------------------
+    const nearbyRes = await fetch(
+      "https://places.googleapis.com/v1/places:searchNearby",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask":
+            "places.id,places.displayName,places.formattedAddress,places.location",
+        },
+        body: JSON.stringify({
+          locationRestriction: {
+            circle: {
+              center: {
+                latitude: Number(lat),
+                longitude: Number(lng),
+              },
+              radius: 50,
+            },
+          },
+        }),
+      }
+    )
+
+    const nearbyJson = await nearbyRes.json()
+    const best = nearbyJson?.places?.[0] ?? null
+
+    // -------------------------------------------------------
+    // 2) 기본 주소 (fallback)
+    // -------------------------------------------------------
+    let fallbackAddress = "주소 없음"
+
+    if (!best) {
+      // Reverse Geocode (fallback)
+      const revRes = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+      )
+      const revJson = await revRes.json()
+      fallbackAddress =
+        revJson?.results?.[0]?.formatted_address || "주소 없음"
+    }
 
     return NextResponse.json({
       ok: true,
-      place: bestPlace,
-      address,
+      place: best
+        ? {
+            placeId: best.id,
+            name: best.displayName?.text ?? null,
+            address: best.formattedAddress ?? fallbackAddress,
+            lat: best.location?.latitude,
+            lng: best.location?.longitude,
+          }
+        : null,
+      address: best?.formattedAddress ?? fallbackAddress,
       lat,
       lng,
     })
-  } catch (error) {
-    console.error("[maps api] fetch error", error)
-    return NextResponse.json({ error: "Failed to fetch place info" }, { status: 500 })
+  } catch (e) {
+    console.error("[maps api error]", e)
+    return NextResponse.json({ ok: false, error: "internal error" })
   }
 }
