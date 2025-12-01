@@ -97,8 +97,8 @@ export default function FeedDetailPage() {
           "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
         .eq("id",id)
-         .in("is_deleted", [null, false]) 
-        .maybeSingle<FeedRow>()
+       .or("is_deleted.is.null,is_deleted.eq.false")   // ← 이게 Supabase 방식
+  .maybeSingle<FeedRow>()
 
       if (fetchError) {
         console.error("[feed detail] fetch error", fetchError)
@@ -140,7 +140,7 @@ export default function FeedDetailPage() {
     void fetchFeed()
   }, [id])
 
-  const handleReaction = (key: ReactionKey) => {
+  const handleReaction = (key: ReacㄹtionKey) => {
     setReactionCounts((prev) => {
       const nextCounts = { ...prev }
       if (selectedReaction === key) {
