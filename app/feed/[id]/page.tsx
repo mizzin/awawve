@@ -112,12 +112,14 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
       }
 
       const joinedUser = Array.isArray(data.users) ? data.users[0] : data.users
+      const maskUserId = (userId: string | null) => (userId ? `익명-${userId.slice(0, 4)}` : "익명")
+      const nickname = joinedUser?.nickname?.trim() || maskUserId(data.user_id)
 
       const mapped: FeedDetail = {
         id: `${data.id}`,
         author: {
           id: data.user_id,
-          nickname: joinedUser?.nickname ?? data.user_id ?? "awave user",
+          nickname,
           avatarUrl: joinedUser?.profile_image ?? null,
         },
         content: data.content,
