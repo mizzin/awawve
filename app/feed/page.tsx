@@ -27,6 +27,7 @@ type FeedRow = {
   content: string
   image_url: string | null
   created_at: string
+    nickname?: string | null
   users?:
     | { id: string; nickname: string | null; profile_image: string | null }
     | { id: string; nickname: string | null; profile_image: string | null }[]
