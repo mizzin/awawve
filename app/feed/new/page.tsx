@@ -24,39 +24,6 @@ type SelectedLocation = {
   isCustom?: boolean
 }
 
-const POPULAR_PLACES: SelectedLocation[] = [
-  {
-    placeName: "서울 시청",
-    address: "서울 중구 세종대로 110",
-    lat: 37.5665,
-    lng: 126.978,
-  },
-  {
-    placeName: "부산 광안리 해수욕장",
-    address: "부산 수영구 광안해변로 219",
-    lat: 35.1531,
-    lng: 129.1187,
-  },
-  {
-    placeName: "제주 노형동 카페거리",
-    address: "제주 제주시 노형동",
-    lat: 33.4864,
-    lng: 126.4816,
-  },
-  {
-    placeName: "수원 화성행궁",
-    address: "경기 수원시 팔달구 정조로 825",
-    lat: 37.2819,
-    lng: 127.0163,
-  },
-  {
-    placeName: "전주 한옥마을",
-    address: "전북 전주시 완산구 기린대로 99",
-    lat: 35.815,
-    lng: 127.1531,
-  },
-]
-
 type MediaPreview = {
   file: File
   preview: string
@@ -207,6 +174,9 @@ export default function NewFeedPage() {
         user_id: userId,
         content: body.trim(),
         image_url: uploadedImageUrl,
+        address: location?.address ?? null,
+        latitude: location?.lat ?? null,
+        longitude: location?.lng ?? null,
         // Additional fields left as defaults (counts, flags, timestamps)
       })
 
@@ -479,14 +449,6 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
     selectedLocation?.isCustom ? selectedLocation : null
   )
 
-  const filteredPlaces = useMemo(() => {
-    if (!query) return POPULAR_PLACES
-    return POPULAR_PLACES.filter((place) => {
-      const target = `${place.placeName} ${place.address}`.toLowerCase()
-      return target.includes(query.toLowerCase())
-    })
-  }, [query])
-
   const handleMapClick = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect()
     const x = (event.clientX - rect.left) / rect.width
@@ -495,9 +457,11 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
     const lat = 37.5665 + (0.5 - y) * 0.6
     const lng = 126.978 + (x - 0.5) * 0.6
 
+    const label = query.trim()
+
     const customLocation: SelectedLocation = {
-      placeName: "사용자 지정 위치",
-      address: "핀으로 지정한 위치",
+      placeName: label || "사용자 지정 위치",
+      address: label || "핀으로 지정한 위치",
       lat: Number(lat.toFixed(6)),
       lng: Number(lng.toFixed(6)),
       isCustom: true,
@@ -561,19 +525,20 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
               />
             )}
           </div>
-          {pinLocation && (
-            <div className="rounded-xl bg-[var(--awave-secondary)] p-3 text-sm text-[var(--awave-text)]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-[var(--awave-text)]">{pinLocation.placeName}</p>
-                  <p className="text-xs text-[var(--awave-text-light)]">
-                    {pinLocation.lat.toFixed(4)}, {pinLocation.lng.toFixed(4)}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="rounded-full bg-[var(--awave-primary)] px-4 py-2 text-xs font-semibold text-white"
+            {pinLocation && (
+              <div className="rounded-xl bg-[var(--awave-secondary)] p-3 text-sm text-[var(--awave-text)]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-[var(--awave-text)]">{pinLocation.placeName}</p>
+                    <p className="text-xs text-[var(--awave-text-light)]">{pinLocation.address}</p>
+                    <p className="text-xs text-[var(--awave-text-light)]">
+                      {pinLocation.lat.toFixed(4)}, {pinLocation.lng.toFixed(4)}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="rounded-full bg-[var(--awave-primary)] px-4 py-2 text-xs font-semibold text-white"
                   onClick={() => {
                     onSelect(pinLocation)
                     onClose()
@@ -586,37 +551,6 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
           )}
         </div>
 
-        <div className="mt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--awave-text-light)]">
-            추천 장소
-          </p>
-          <div className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
-            {filteredPlaces.length === 0 && (
-              <p className="rounded-xl border border-dashed border-[var(--awave-border)] px-4 py-6 text-center text-sm text-[var(--awave-text-light)]">
-                검색 결과가 없어요.
-              </p>
-            )}
-            {filteredPlaces.map((place) => (
-              <button
-                key={place.placeName}
-                type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-[var(--awave-border)] px-4 py-3 text-left transition hover:border-[var(--awave-primary)]/30 hover:bg-[var(--awave-secondary)]"
-                onClick={() => {
-                  onSelect(place)
-                  onClose()
-                }}
-              >
-                <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--awave-secondary)] text-[var(--awave-primary)]">
-                  <MapPin className="size-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-[var(--awave-text)]">{place.placeName}</p>
-                  <p className="text-xs text-[var(--awave-text-light)]">{place.address}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   )

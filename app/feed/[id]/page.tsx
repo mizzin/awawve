@@ -36,6 +36,9 @@ type FeedDetail = {
   }
   content: string
   imageUrl: string | null
+  address: string | null
+  latitude: number | null
+  longitude: number | null
   reactions: Record<ReactionKey, number>
   comments: Comment[]
   created_at: string
@@ -46,6 +49,9 @@ type FeedRow = {
   user_id: string | null
   content: string
   image_url: string | null
+  address: string | null
+  latitude: number | null
+  longitude: number | null
   created_at: string
   users?:
     | { id: string; nickname: string | null; profile_image: string | null }
@@ -187,7 +193,7 @@ export default function FeedDetailPage() {
       const { data, error: fetchError } = await supabase
         .from("feeds")
         .select(
-          "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
+          "id, user_id, content, image_url, address, latitude, longitude, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
         .eq("id", feedId)
         .or("is_deleted.is.null,is_deleted.eq.false")
@@ -219,6 +225,9 @@ export default function FeedDetailPage() {
         },
         content: data.content,
         imageUrl: data.image_url,
+        address: data.address,
+        latitude: data.latitude,
+        longitude: data.longitude,
         reactions: { like: 0, funny: 0, dislike: 0 },
         comments: [],
         created_at: data.created_at,
@@ -476,6 +485,31 @@ export default function FeedDetailPage() {
           <section className="mt-6 space-y-3">
             <p className="text-lg leading-relaxed">{post.content}</p>
           </section>
+
+          {post.latitude !== null && post.longitude !== null && (
+            <section className="mt-6 space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--awave-text)]">위치</p>
+                  {post.address ? (
+                    <p className="text-xs text-[var(--awave-text-light)]">{post.address}</p>
+                  ) : null}
+                  <p className="text-xs text-[var(--awave-text-light)]">
+                    {post.latitude.toFixed(4)}, {post.longitude.toFixed(4)}
+                  </p>
+                </div>
+              </div>
+              <div className="overflow-hidden rounded-lg border border-[var(--awave-border)]">
+                <iframe
+                  title="선택한 위치"
+                  src={`https://www.google.com/maps?q=${post.latitude},${post.longitude}&z=16&output=embed`}
+                  className="h-56 w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            </section>
+          )}
 
           <section className="mt-8 space-y-4">
             <div className="text-sm text-[var(--awave-text-light)]">반응</div>
