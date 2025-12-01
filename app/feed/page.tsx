@@ -104,7 +104,11 @@ export default function FeedPage() {
         const maskUserId = (userId: string | null) => (userId ? `익명-${userId.slice(0, 4)}` : "익명")
         const mapped = (payload.feeds ?? []).map<FeedCardData>((item: FeedRow, index) => {
           const joinedUser = Array.isArray(item.users) ? item.users[0] : item.users
-          const nickname = item.author_nickname ?? joinedUser?.nickname ?? maskUserId(item.user_id)
+          const localNickname =
+            item.user_id && sessionUser?.id === item.user_id
+              ? profileName ?? sessionUser.email ?? joinedUser?.nickname ?? null
+              : null
+          const nickname = item.author_nickname ?? joinedUser?.nickname ?? localNickname ?? maskUserId(item.user_id)
           const avatar = item.author_profile_image ?? joinedUser?.profile_image ?? null
           const id = item.id ? `${item.id}` : `${index}`
           return {
@@ -132,7 +136,7 @@ export default function FeedPage() {
     }
 
     void fetchFeeds()
-  }, [])
+  }, [profileName, sessionUser?.email, sessionUser?.id])
 
   useEffect(() => {
     if (sessionUser?.id && profileFetched && lastGreetedUserIdRef.current !== sessionUser.id) {
