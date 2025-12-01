@@ -63,6 +63,7 @@ export default function MyProfilePage() {
   }
 
   useEffect(() => {
+    console.log("🔄 MyProfilePage mounted")
     const syncSession = async () => {
       const { data } = await supabase.auth.getSession()
       setSessionUser(data.session?.user ?? null)
