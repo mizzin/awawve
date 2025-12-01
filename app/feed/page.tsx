@@ -122,7 +122,6 @@ export default function FeedPage() {
       }
 
       const mapped = (data || []).map<FeedCardData>((item) => {
-        console.log("🔥 feed list raw item:", item)
         const joinedUser = Array.isArray(item.users) ? item.users[0] : item.users
         const reactions = item.feed_reactions || []
         const maskUserId = (userId: string | null) => (userId ? `익명-${userId.slice(0, 4)}` : "익명")
