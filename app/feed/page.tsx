@@ -27,7 +27,10 @@ type FeedRow = {
   content: string
   image_url: string | null
   created_at: string
-  users?: { id: string; nickname: string | null; profile_image: string | null } | null
+  users?:
+    | { id: string; nickname: string | null; profile_image: string | null }
+    | { id: string; nickname: string | null; profile_image: string | null }[]
+    | null
 }
 
 export default function FeedPage() {
@@ -89,37 +92,37 @@ export default function FeedPage() {
   useEffect(() => {
     const fetchFeeds = async () => {
       setFeedsLoading(true)
-      const { data, error } = await supabase
-        .from("feeds")
-        // Explicitly join on the author FK; feeds also has deleted_by -> users so Supabase needs the FK name.
-        .select(
-          "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
-        )
-        .order("created_at", { ascending: false })
+      try {
+        const response = await fetch("/api/feeds", { cache: "no-store" })
+        if (!response.ok) {
+          throw new Error(`피드 API 응답이 올바르지 않습니다. (${response.status})`)
+        }
 
-      if (error) {
+        const payload = (await response.json()) as { feeds?: FeedRow[] }
+        const mapped = (payload.feeds ?? []).map<FeedCardData>((item: FeedRow, index) => {
+          const joinedUser = Array.isArray(item.users) ? item.users[0] : item.users
+          return {
+            id: Number.isFinite(Number(item.id)) ? Number(item.id) : index,
+            author: {
+              nickname: joinedUser?.nickname ?? item.user_id ?? "awave user",
+              handle: joinedUser?.nickname ? `@${joinedUser.nickname}` : item.user_id ?? undefined,
+              avatarUrl: joinedUser?.profile_image ?? null,
+            },
+            content: item.content,
+            imageUrl: item.image_url,
+            createdAt: item.created_at,
+            commentCount: 0,
+            reactions: { like: 0, funny: 0, dislike: 0 },
+          }
+        })
+
+        setFeeds(mapped)
+      } catch (error) {
         console.error("Failed to load feeds", error)
         setFeeds([])
+      } finally {
         setFeedsLoading(false)
-        return
       }
-
-      const mapped = (data ?? []).map<FeedCardData>((item: FeedRow, index) => ({
-        id: Number.isFinite(Number(item.id)) ? Number(item.id) : index,
-        author: {
-          nickname: item.users?.nickname ?? item.user_id ?? "awave user",
-          handle: item.users?.nickname ? `@${item.users.nickname}` : item.user_id ?? undefined,
-          avatarUrl: item.users?.profile_image ?? null,
-        },
-        content: item.content,
-        imageUrl: item.image_url,
-        createdAt: item.created_at,
-        commentCount: 0,
-        reactions: { like: 0, funny: 0, dislike: 0 },
-      }))
-
-      setFeeds(mapped)
-      setFeedsLoading(false)
     }
 
     void fetchFeeds()
