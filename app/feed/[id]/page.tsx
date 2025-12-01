@@ -95,7 +95,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
           "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
         .eq("id", params.id)
-        .or("is_deleted.is.null,is_deleted.eq.false")
+         .in("is_deleted", [null, false]) 
         .maybeSingle<FeedRow>()
 
       if (fetchError) {
