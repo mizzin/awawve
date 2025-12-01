@@ -73,6 +73,8 @@ const loadGoogleMaps = (apiKey?: string) =>
         console.error("[maps] existing script load error")
         resolve(null)
       })
+      // 방어: 이미 로드됐는데 google이 없는 경우도 즉시 종료
+      setTimeout(() => resolve((window as any).google ?? null), 0)
       return
     }
 
@@ -470,6 +472,7 @@ export default function NewFeedPage() {
           <LocationModal
             selectedLocation={location}
             onClose={() => setIsLocationModalOpen(false)}
+            isOpen={isLocationModalOpen}
             onSelect={(loc) => {
               setLocation(loc)
               setIsLocationModalOpen(false)
@@ -483,11 +486,12 @@ export default function NewFeedPage() {
 
 type LocationModalProps = {
   selectedLocation: SelectedLocation | null
+  isOpen: boolean
   onSelect: (location: SelectedLocation) => void
   onClose: () => void
 }
 
-function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalProps) {
+function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: LocationModalProps) {
   const [query, setQuery] = useState("")
   const [pinLocation, setPinLocation] = useState<SelectedLocation | null>(() =>
     selectedLocation?.isCustom ? selectedLocation : null
@@ -499,11 +503,16 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
   const mountedRef = useRef(false)
 
   const initializeMap = async () => {
-    console.log("[maps] init start", { mounted: mountedRef.current, loaded: mapsLoadedRef.current, hasRef: Boolean(mapRef.current) })
-    if (mapsLoadedRef.current) return
+    const hasElement = mapRef.current instanceof Element
+    console.log("[maps] init start", {
+      mounted: mountedRef.current,
+      loaded: mapsLoadedRef.current,
+      hasRef: hasElement,
+    })
+    if (mapsLoadedRef.current || !hasElement) return
     const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
-    if (!google || !mapRef.current) {
-      console.warn("[maps] init blocked", { google: Boolean(google), hasRef: Boolean(mapRef.current) })
+    if (!google) {
+      console.warn("[maps] init blocked", { google: Boolean(google), hasRef: hasElement })
       return
     }
 
@@ -511,12 +520,18 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
       ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
       : DEFAULT_MAP_CENTER
 
-    const map = new google.maps.Map(mapRef.current, {
-      center,
-      zoom: 15,
-      disableDefaultUI: true,
-      clickableIcons: false,
-    })
+    let map: any = null
+    try {
+      map = new google.maps.Map(mapRef.current, {
+        center,
+        zoom: 15,
+        disableDefaultUI: true,
+        clickableIcons: false,
+      })
+    } catch (err) {
+      console.error("[maps] map init error", err)
+      return
+    }
 
     mapInstanceRef.current = map
     mapsLoadedRef.current = true
@@ -569,12 +584,23 @@ function LocationModal({ selectedLocation, onClose, onSelect }: LocationModalPro
   }, [])
 
   useEffect(() => {
+    if (!isOpen) {
+      return
+    }
     const timer = setTimeout(() => {
       if (!mountedRef.current) return
       void initializeMap()
-    }, 40)
-    return () => clearTimeout(timer)
-  }, [])
+    }, 60)
+    return () => {
+      clearTimeout(timer)
+      if (markerRef.current) {
+        markerRef.current.setMap(null)
+        markerRef.current = null
+      }
+      mapInstanceRef.current = null
+      mapsLoadedRef.current = false
+    }
+  }, [isOpen])
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 px-0 pb-0">
