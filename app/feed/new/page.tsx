@@ -572,6 +572,7 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
     }
 
     map.addListener("click", (event: any) => {
+      console.log("[maps] click event", event)
       const lat = event?.latLng?.lat()
       const lng = event?.latLng?.lng()
       if (lat === undefined || lng === undefined) return
@@ -644,13 +645,13 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
           </button>
         </div>
 
-        <div className="relative">
+        <div className="relative pointer-events-none">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--awave-text-light)]" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="장소를 검색해보세요"
-            className="w-full rounded-xl border-[var(--awave-border)] bg-[var(--awave-secondary)] pl-10 pr-4 text-sm text-[var(--awave-text)]"
+            className="pointer-events-auto w-full rounded-xl border-[var(--awave-border)] bg-[var(--awave-secondary)] pl-10 pr-4 text-sm text-[var(--awave-text)]"
           />
         </div>
 
@@ -658,7 +659,7 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
           <div className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
             <div ref={mapRef} className="absolute inset-0" />
             {!pinLocation && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-b from-white/40 via-white/20 to-transparent text-sm font-medium text-[var(--awave-text-light)]">
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-b from-white/40 via-white/20 to-transparent text-sm font-medium text-[var(--awave-text-light)] pointer-events-none">
                 터치해서 핀 놓기
                 <span className="mt-1 text-[10px]">BGC 기준 지도</span>
               </div>
