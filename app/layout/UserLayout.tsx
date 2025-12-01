@@ -1,4 +1,6 @@
 "use client"
+console.log("🔄 UserLayout mounted");
+
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
