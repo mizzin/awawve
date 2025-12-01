@@ -77,6 +77,32 @@ const buildFeedImagePath = (file: File) => {
   return `feed/${dateFolder}/${uniqueSegment}.${extension}`
 }
 
+const compressImage = async (file: File, maxSize = 1280, quality = 0.82): Promise<File> => {
+  const imageBitmap = await createImageBitmap(file)
+  const { width, height } = imageBitmap
+
+  const scale = Math.min(1, maxSize / Math.max(width, height))
+  const targetWidth = Math.max(1, Math.round(width * scale))
+  const targetHeight = Math.max(1, Math.round(height * scale))
+
+  const canvas = document.createElement("canvas")
+  canvas.width = targetWidth
+  canvas.height = targetHeight
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return file
+
+  ctx.drawImage(imageBitmap, 0, 0, targetWidth, targetHeight)
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob((result) => resolve(result), "image/jpeg", quality)
+  )
+  if (!blob) return file
+
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  })
+}
+
 const uploadFeedImage = async (file: File) => {
   if (!FEED_IMAGE_BUCKET) {
     throw new Error("NEXT_PUBLIC_SUPABASE_FEED_BUCKET env is not configured.")
@@ -135,7 +161,7 @@ export default function NewFeedPage() {
     setBody(nextValue)
   }
 
-  const handleMediaChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleMediaChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     if (!["image/jpeg", "image/png"].includes(file.type)) {
@@ -147,8 +173,10 @@ export default function NewFeedPage() {
       URL.revokeObjectURL(media.preview)
     }
 
-    const preview = URL.createObjectURL(file)
-    setMedia({ file, preview })
+    // 압축 & 리사이즈하여 업로드 용량 최소화 (원본이 작으면 그대로 사용)
+    const compressedFile = await compressImage(file, 1280, 0.82)
+    const preview = URL.createObjectURL(compressedFile)
+    setMedia({ file: compressedFile, preview })
   }
 
   const handleMediaRemove = () => {
