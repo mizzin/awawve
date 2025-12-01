@@ -17,9 +17,9 @@ import { supabase } from "@/lib/supabaseClient"
 type ReactionKey = "like" | "funny" | "dislike"
 
 type Comment = {
-  id: string | number
+  id: string
   user: {
-    id: string | number
+    id: string
     nickname: string
     avatarUrl: string | null
   }
@@ -50,6 +50,21 @@ type FeedRow = {
   users?:
     | { id: string; nickname: string | null; profile_image: string | null }
     | { id: string; nickname: string | null; profile_image: string | null }[]
+    | null
+}
+
+type CommentRow = {
+  id: string
+  feed_id: string
+  user_id: string
+  content: string
+  created_at: string
+  users?:
+    | {
+        id: string
+        nickname: string | null
+        profile_image: string | null
+      }
     | null
 }
 
@@ -87,9 +102,23 @@ export default function FeedDetailPage() {
   const [commentInput, setCommentInput] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
   const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([])
+  const [commentSubmitting, setCommentSubmitting] = useState(false)
 
   const menuRef = useRef<HTMLDivElement | null>(null)
   const closeMenu = useCallback(() => setMenuOpen(false), [])
+
+  const mapCommentRow = useCallback((row: CommentRow): Comment => {
+    return {
+      id: row.id,
+      user: {
+        id: row.user_id,
+        nickname: row.users?.nickname?.trim() || "익명",
+        avatarUrl: row.users?.profile_image ?? null,
+      },
+      text: row.content,
+      created_at: row.created_at,
+    }
+  }, [])
 
   useEffect(() => {
     const syncUser = async () => {
@@ -97,6 +126,25 @@ export default function FeedDetailPage() {
       setAuthUserId(data.session?.user?.id ?? null)
     }
     void syncUser()
+
+    const fetchComments = async (feedId: string) => {
+      const { data: commentRows, error: commentError } = await supabase
+        .from("feed_comments")
+        .select(
+          "id, feed_id, user_id, content, created_at, users:users!feed_comments_user_id_fkey(id, nickname, profile_image)"
+        )
+        .eq("feed_id", feedId)
+        .order("created_at", { ascending: true })
+
+      if (commentError) {
+        console.error("[feed detail] comments fetch error", commentError)
+        return
+      }
+
+      if (commentRows) {
+        setComments(commentRows.map(mapCommentRow))
+      }
+    }
 
     const fetchFeed = async () => {
       setLoading(true)
@@ -106,9 +154,9 @@ export default function FeedDetailPage() {
         .select(
           "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
-        .eq("id",id)
-       .or("is_deleted.is.null,is_deleted.eq.false")   // ← 이게 Supabase 방식
-  .maybeSingle<FeedRow>()
+        .eq("id", id)
+        .or("is_deleted.is.null,is_deleted.eq.false")
+        .maybeSingle<FeedRow>()
 
       if (fetchError) {
         console.error("[feed detail] fetch error", fetchError)
@@ -143,12 +191,12 @@ export default function FeedDetailPage() {
 
       setPost(mapped)
       setReactionCounts(mapped.reactions)
-      setComments(mapped.comments)
+      void fetchComments(`${data.id}`)
       setLoading(false)
     }
 
     void fetchFeed()
-  }, [id])
+  }, [id, mapCommentRow])
 
   const triggerEmojiBurst = useCallback((key: ReactionKey) => {
     const count = Math.floor(Math.random() * 3) + 3
@@ -188,22 +236,44 @@ export default function FeedDetailPage() {
     })
   }
 
-  const handleCommentSubmit = () => {
+  const handleCommentSubmit = useCallback(async () => {
     const text = commentInput.trim()
     if (!text) return
-    const newComment: Comment = {
-      id: Date.now(),
-      user: {
-        id: authUserId ?? "me",
-        nickname: "나",
-        avatarUrl: null,
-      },
-      text,
-      created_at: new Date().toISOString(),
+    if (!post?.id) return
+
+    setCommentSubmitting(true)
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) {
+      alert("로그인 후 댓글을 남겨주세요.")
+      setCommentSubmitting(false)
+      return
     }
-    setComments((prev) => [...prev, newComment])
-    setCommentInput("")
-  }
+
+    const { data, error } = await supabase
+      .from("feed_comments")
+      .insert({
+        feed_id: post.id,
+        user_id: userData.user.id,
+        content: text,
+      })
+      .select("id, feed_id, user_id, content, created_at, users:users(id, nickname, profile_image)")
+      .single()
+
+    if (error) {
+      console.error("댓글을 저장하지 못했습니다.", error)
+      alert("댓글을 저장하지 못했습니다. 다시 시도해주세요.")
+      setCommentSubmitting(false)
+      return
+    }
+
+    if (data) {
+      setComments((prev) => [...prev, mapCommentRow(data as CommentRow)])
+      setCommentInput("")
+    }
+
+    setCommentSubmitting(false)
+  }, [commentInput, mapCommentRow, post?.id])
 
   const formattedDate = useMemo(() => (post ? formatKoreanDate(post.created_at) : ""), [post])
   const isMine = post?.author.id && authUserId ? authUserId === post.author.id : false
@@ -404,8 +474,11 @@ export default function FeedDetailPage() {
               {commentInput.trim() && (
                 <button
                   type="button"
-                  onClick={handleCommentSubmit}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm font-semibold text-[var(--awave-button)] transition hover:bg-[var(--awave-secondary)]"
+                  onClick={() => {
+                    void handleCommentSubmit()
+                  }}
+                  disabled={commentSubmitting}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-sm font-semibold text-[var(--awave-button)] transition hover:bg-[var(--awave-secondary)] disabled:opacity-60"
                 >
                   등록
                 </button>
