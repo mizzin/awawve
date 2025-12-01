@@ -3,85 +3,52 @@
 import Image from "next/image"
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, MoreHorizontal, SendHorizontal } from "lucide-react"
+import { MoreHorizontal, SendHorizontal } from "lucide-react"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { generateAvatarSVG } from "@/lib/utils/avatar"
+import { supabase } from "@/lib/supabaseClient"
 
 type ReactionKey = "like" | "funny" | "dislike"
 
 type Comment = {
-  id: number
+  id: string | number
   user: {
-    id: number
+    id: string | number
     nickname: string
-    avatarUrl: string
+    avatarUrl: string | null
   }
   text: string
   created_at: string
 }
 
 type FeedDetail = {
-  id: number
+  id: string
   author: {
-    id: number
+    id: string | null
     nickname: string
-    avatarUrl: string
+    avatarUrl: string | null
   }
   content: string
   imageUrl: string | null
-  category: string | null
-  location:
-    | {
-        place_name: string
-        latitude: number
-        longitude: number
-      }
-    | null
   reactions: Record<ReactionKey, number>
   comments: Comment[]
   created_at: string
 }
 
-const DUMMY_POST: FeedDetail = {
-  id: 42,
-  author: {
-    id: 1,
-    nickname: "소금빵수집가",
-    avatarUrl: "https://i.pravatar.cc/120?img=5",
-  },
-  content:
-    "오늘은 성수동에서 새로 문 연 카페를 다녀왔어요. 콜드브루와 말차 조합이 생각보다 잘 어울리더라고요. 멀지 않은 곳에 노을이 너무 예쁘게 들어오는 포인트가 있어서 오랜만에 마음 편하게 쉬다 왔습니다.",
-  imageUrl: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80",
-  category: "카페",
-  location: {
-    place_name: "성수 스테이트 카페",
-    latitude: 37.5446,
-    longitude: 127.0558,
-  },
-  reactions: {
-    like: 24,
-    funny: 5,
-    dislike: 1,
-  },
-  comments: [
-    {
-      id: 11,
-      user: { id: 2, nickname: "트레블러", avatarUrl: "https://i.pravatar.cc/120?img=10" },
-      text: "여기 예약 어려운데 다녀오셨네요! 분위기 어땠나요?",
-      created_at: "2025-02-18T08:30:00Z",
-    },
-    {
-      id: 12,
-      user: { id: 3, nickname: "vanillalatte", avatarUrl: "https://i.pravatar.cc/120?img=32" },
-      text: "말차 콜드브루라니... 담주에 바로 가볼게요.",
-      created_at: "2025-02-18T09:12:00Z",
-    },
-  ],
-  created_at: "2025-02-18T07:15:00Z",
+type FeedRow = {
+  id: string
+  user_id: string | null
+  content: string
+  image_url: string | null
+  created_at: string
+  users?:
+    | { id: string; nickname: string | null; profile_image: string | null }
+    | { id: string; nickname: string | null; profile_image: string | null }[]
+    | null
 }
 
 const reactionMeta: Record<
@@ -95,18 +62,73 @@ const reactionMeta: Record<
 
 export default function FeedDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const post = useMemo(() => ({ ...DUMMY_POST, id: Number(params.id) || DUMMY_POST.id }), [params.id])
+  const [post, setPost] = useState<FeedDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const currentUserId = 1
-  const isMine = currentUserId === post.author.id
-
-  const [, setReactionCounts] = useState(post.reactions)
+  const [reactionCounts, setReactionCounts] = useState<Record<ReactionKey, number>>({
+    like: 0,
+    funny: 0,
+    dislike: 0,
+  })
   const [selectedReaction, setSelectedReaction] = useState<ReactionKey | null>(null)
-  const [comments, setComments] = useState<Comment[]>(post.comments)
+  const [comments, setComments] = useState<Comment[]>([])
   const [commentInput, setCommentInput] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
 
   const menuRef = useRef<HTMLDivElement | null>(null)
   const closeMenu = useCallback(() => setMenuOpen(false), [])
+
+  useEffect(() => {
+    const fetchFeed = async () => {
+      setLoading(true)
+      setError(null)
+      const { data, error: fetchError } = await supabase
+        .from("feeds")
+        .select(
+          "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
+        )
+        .eq("id", params.id)
+        .or("is_deleted.is.null,is_deleted.eq.false")
+        .maybeSingle<FeedRow>()
+
+      if (fetchError) {
+        console.error("[feed detail] fetch error", fetchError)
+        setError("피드를 불러오지 못했습니다.")
+        setLoading(false)
+        return
+      }
+
+      if (!data) {
+        setError("존재하지 않는 피드입니다.")
+        setLoading(false)
+        return
+      }
+
+      const joinedUser = Array.isArray(data.users) ? data.users[0] : data.users
+
+      const mapped: FeedDetail = {
+        id: `${data.id}`,
+        author: {
+          id: data.user_id,
+          nickname: joinedUser?.nickname ?? data.user_id ?? "awave user",
+          avatarUrl: joinedUser?.profile_image ?? null,
+        },
+        content: data.content,
+        imageUrl: data.image_url,
+        reactions: { like: 0, funny: 0, dislike: 0 },
+        comments: [],
+        created_at: data.created_at,
+      }
+
+      setPost(mapped)
+      setReactionCounts(mapped.reactions)
+      setComments(mapped.comments)
+      setLoading(false)
+    }
+
+    void fetchFeed()
+  }, [params.id])
 
   const handleReaction = (key: ReactionKey) => {
     setReactionCounts((prev) => {
@@ -134,7 +156,7 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
       user: {
         id: currentUserId,
         nickname: "나",
-        avatarUrl: "https://i.pravatar.cc/120?img=47",
+        avatarUrl: null,
       },
       text,
       created_at: new Date().toISOString(),
@@ -143,11 +165,12 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
     setCommentInput("")
   }
 
-  const formattedDate = formatKoreanDate(post.created_at)
+  const formattedDate = useMemo(() => (post ? formatKoreanDate(post.created_at) : ""), [post])
+  const isMine = post?.author.id ? currentUserId === post.author.id : false
 
   const menuItems = isMine
     ? [
-        { label: "수정", action: () => router.push(`/feed/${post.id}/edit`) },
+        { label: "수정", action: () => (post ? router.push(`/feed/${post.id}/edit`) : undefined) },
         { label: "공유", action: () => alert("공유 기능은 준비 중입니다.") },
         { label: "삭제", action: () => alert("삭제 기능은 준비 중입니다.") },
       ]
@@ -157,6 +180,29 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
       ]
 
   useOnClickOutside(menuRef, closeMenu)
+
+  if (loading) {
+    return (
+      <UserLayout>
+        <div className="mx-auto flex min-h-screen max-w-xl flex-col px-4 py-12">
+          <p className="text-center text-sm text-[var(--awave-text-light)]">피드를 불러오는 중입니다...</p>
+        </div>
+      </UserLayout>
+    )
+  }
+
+  if (error || !post) {
+    return (
+      <UserLayout>
+        <div className="mx-auto flex min-h-screen max-w-xl flex-col px-4 py-12">
+          <p className="text-center text-sm text-[var(--awave-text-light)]">{error ?? "피드를 찾을 수 없습니다."}</p>
+          <Button className="mt-4 self-center" variant="outline" onClick={() => router.push("/feed")}>
+            피드 목록으로 돌아가기
+          </Button>
+        </div>
+      </UserLayout>
+    )
+  }
 
   return (
     <UserLayout>
@@ -233,22 +279,6 @@ export default function FeedDetailPage({ params }: { params: { id: string } }) {
             <span>ID #{post.id}</span>
           </div>
         </section>
-
-        {(post.category || post.location) && (
-          <section className="mt-4 space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] px-4 py-3">
-            {post.category && (
-              <span className="inline-flex items-center rounded-full bg-[var(--awave-secondary)] px-3 py-1 text-sm font-medium text-[var(--awave-primary)]">
-                #{post.category}
-              </span>
-            )}
-            {post.location && (
-              <div className="flex items-center gap-2 text-sm text-[var(--awave-text-light)]">
-            <MapPin className="size-4 text-[var(--awave-button)]" />
-                <span>{post.location.place_name}</span>
-              </div>
-            )}
-          </section>
-        )}
 
         <section className="mt-8 space-y-4">
           <div className="text-sm text-[var(--awave-text-light)]">반응</div>
