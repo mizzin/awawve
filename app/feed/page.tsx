@@ -91,7 +91,10 @@ export default function FeedPage() {
       setFeedsLoading(true)
       const { data, error } = await supabase
         .from("feeds")
-        .select("id, user_id, content, image_url, created_at, users:users(id, nickname, profile_image)")
+        // Explicitly join on the author FK; feeds also has deleted_by -> users so Supabase needs the FK name.
+        .select(
+          "id, user_id, content, image_url, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
+        )
         .order("created_at", { ascending: false })
 
       if (error) {
