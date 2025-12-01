@@ -22,16 +22,16 @@ export async function GET(req: Request) {
         fieldMask: "id,displayName,formattedAddress,location",
       })
 
-     const detailRes = await fetch(
-  `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?fields=displayName,formattedAddress,location`,
-  {
-    method: "GET",
-    headers: {
-      "X-Goog-Api-Key": apiKey,
-    },
-  }
-)
-
+      const detailRes = await fetch(
+        `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+        {
+          method: "GET",
+          headers: {
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
+          },
+        }
+      )
 
       console.log("[DEBUG] Detail Status:", detailRes.status)
       const detailText = await detailRes.text()
@@ -40,7 +40,17 @@ export async function GET(req: Request) {
       const detailJson = detailText ? JSON.parse(detailText) : {}
       if (!detailRes.ok || (detailJson.status && detailJson.status !== "OK" && !detailJson.id)) {
         console.error("[maps api] place details error", detailRes.status, detailJson)
-        // fallback to lat/lng if provided
+        if (lat && lng) {
+          return NextResponse.json({
+            ok: false,
+            error: "Place details failed, falling back to coordinates",
+            place: null,
+            address: "주소 없음",
+            lat: Number(lat),
+            lng: Number(lng),
+          })
+        }
+        return NextResponse.json({ ok: false, error: "Missing lat/lng after details failure" })
       } else {
         const name = detailJson?.displayName?.text ?? null
         const address = detailJson?.formattedAddress ?? "주소 없음"
