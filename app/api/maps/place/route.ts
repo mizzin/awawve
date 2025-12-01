@@ -16,13 +16,17 @@ export async function GET(req: Request) {
     // placeId 우선 처리: placeId가 있으면 디테일 조회
     // -------------------------------------------------------
     if (placeId) {
-      const detailRes = await fetch(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?fields=id,displayName,formattedAddress,location`, {
-        method: "GET",
-        headers: {
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
-        },
-      })
+      const detailRes = await fetch(
+  `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+  {
+    method: "GET",
+    headers: {
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "id,displayName,formattedAddress,location",
+    },
+  }
+)
+
       const detailJson = await detailRes.json()
       if (!detailRes.ok || (detailJson.status && detailJson.status !== "OK" && !detailJson.id)) {
         console.error("[maps api] place details error", detailRes.status, detailJson)
