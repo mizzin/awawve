@@ -1,17 +1,15 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import type { User } from "@supabase/supabase-js"
 
-import { supabase } from "./supabaseClient"
+import { useAuth } from "./authContext"
 import { mockApi, mockApiAvailable, type ReportRow, type UserRecord } from "./mockApi"
 
 export function useUserAccess(userId = 1, requiredLevel?: number) {
+  const { user: authUser, loading: authLoading } = useAuth()
   const [user, setUser] = useState<UserRecord | null>(null)
   const [pendingReports, setPendingReports] = useState<ReportRow[]>([])
   const [mockLoading, setMockLoading] = useState(true)
-  const [authUser, setAuthUser] = useState<User | null>(null)
-  const [authLoading, setAuthLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchMockData = useCallback(async () => {
@@ -44,38 +42,6 @@ export function useUserAccess(userId = 1, requiredLevel?: number) {
   useEffect(() => {
     void fetchMockData()
   }, [fetchMockData])
-
-  useEffect(() => {
-    const syncAuth = async () => {
-      try {
-        const userRes = await supabase.auth.getUser()
-        if (userRes.data.user) {
-          setAuthUser(userRes.data.user)
-          setAuthLoading(false)
-          return
-        }
-
-        const { data, error } = await supabase.auth.getSession()
-        if (error) {
-          setAuthUser(null)
-        } else {
-          setAuthUser(data.session?.user ?? null)
-        }
-      } catch {
-        setAuthUser(null)
-      } finally {
-        setAuthLoading(false)
-      }
-    }
-    void syncAuth()
-
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user ?? null)
-    })
-    return () => {
-      data.subscription.unsubscribe()
-    }
-  }, [])
 
   const meetsLevel = useMemo(() => {
     if (requiredLevel === undefined || requiredLevel === null) return true

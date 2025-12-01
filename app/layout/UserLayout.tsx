@@ -28,10 +28,11 @@ const navItems = [
   { href: "/profile/me", label: "프로필", icon: UserRound, match: (path: string) => path.startsWith("/profile") },
 ]
 
-export default function UserLayout({ children, isLoggedIn = true, onRequireAuth, userId = 1 }: UserLayoutProps) {
+export default function UserLayout({ children, isLoggedIn, onRequireAuth, userId = 1 }: UserLayoutProps) {
   const pathname = usePathname()
-  const { isLocked, lockReason } = useUserAccess(userId)
-  const effectiveLoggedIn = isLoggedIn && !isLocked
+  const { isLocked, lockReason, authUser, loading: accessLoading } = useUserAccess(userId)
+  const computedLoggedIn = isLoggedIn ?? Boolean(authUser)
+  const effectiveLoggedIn = computedLoggedIn && !isLocked
 
   const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
     if (isLocked) {
@@ -45,6 +46,10 @@ export default function UserLayout({ children, isLoggedIn = true, onRequireAuth,
       event.preventDefault()
       onRequireAuth?.()
     }
+  }
+
+  if (accessLoading) {
+    return <div className="min-h-screen bg-[var(--awave-bg)]" aria-hidden />
   }
 
   return (
