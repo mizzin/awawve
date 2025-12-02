@@ -174,6 +174,7 @@ export default function NewFeedPage() {
         user_id: userId,
         content: body.trim(),
         image_url: uploadedImageUrl,
+        category: selectedTag ?? null,
         address: location?.address ?? null,
         latitude: location?.lat ?? null,
         longitude: location?.lng ?? null,

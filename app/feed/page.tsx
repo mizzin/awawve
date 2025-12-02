@@ -26,6 +26,7 @@ type FeedRow = {
   user_id: string | null
   content: string
   image_url: string | null
+  category: string | null
   created_at: string
   nickname?: string | null
   users?:
@@ -106,6 +107,7 @@ export default function FeedPage() {
           user_id,
           content,
           image_url,
+          category,
           created_at,
           users:users!feeds_user_id_fkey(id, nickname, profile_image),
           feed_comments:feed_comments(id),
@@ -136,6 +138,7 @@ export default function FeedPage() {
           },
           content: item.content,
           imageUrl: item.image_url,
+          category: item.category,
           createdAt: item.created_at,
           commentCount: item.feed_comments?.length ?? 0,
           reactions: {

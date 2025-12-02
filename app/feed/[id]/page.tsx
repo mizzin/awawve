@@ -36,6 +36,7 @@ type FeedDetail = {
   }
   content: string
   imageUrl: string | null
+  category: string | null
   address: string | null
   latitude: number | null
   longitude: number | null
@@ -49,6 +50,7 @@ type FeedRow = {
   user_id: string | null
   content: string
   image_url: string | null
+  category: string | null
   address: string | null
   latitude: number | null
   longitude: number | null
@@ -195,7 +197,7 @@ export default function FeedDetailPage() {
       const { data, error: fetchError } = await supabase
         .from("feeds")
         .select(
-          "id, user_id, content, image_url, address, latitude, longitude, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
+          "id, user_id, content, image_url, category, address, latitude, longitude, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
         .eq("id", feedId)
         .or("is_deleted.is.null,is_deleted.eq.false")
@@ -225,11 +227,12 @@ export default function FeedDetailPage() {
           nickname,
           avatarUrl: joinedUser?.profile_image ?? null,
         },
-        content: data.content,
-        imageUrl: data.image_url,
-        address: data.address,
-        latitude: data.latitude,
-        longitude: data.longitude,
+          content: data.content,
+          imageUrl: data.image_url,
+          category: data.category,
+          address: data.address,
+          latitude: data.latitude,
+          longitude: data.longitude,
         reactions: { like: 0, funny: 0, dislike: 0 },
         comments: [],
         created_at: data.created_at,
@@ -381,6 +384,7 @@ export default function FeedDetailPage() {
   const formattedDate = useMemo(() => (post ? formatKoreanDate(post.created_at) : ""), [post])
   const isMine = post?.author.id && authUserId ? authUserId === post.author.id : false
   const renderContent = useCallback((text: string) => linkifyText(text), [])
+  const categoryBadge = post?.category && post.category.trim().length > 0 ? post.category.trim() : null
 
   const handleDelete = useCallback(async () => {
     if (!post?.id || deleting) return
@@ -475,7 +479,7 @@ export default function FeedDetailPage() {
     <UserLayout>
       <div className="min-h-screen bg-white text-[var(--awave-text)]">
         <main className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-32 pt-6">
-          <section className="flex items-center justify-between">
+          <section className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
                 <Image
@@ -491,9 +495,14 @@ export default function FeedDetailPage() {
                 <p className="text-base font-semibold">@{post.author.nickname}</p>
                 <p className="text-xs text-[#999999]">{formattedDate}</p>
               </div>
-            </div>
+              </div>
 
-            <div className="relative" ref={menuRef}>
+            <div className="relative flex items-start gap-2" ref={menuRef}>
+              {categoryBadge && (
+                <span className="inline-flex h-6 items-center justify-center rounded-full bg-[var(--awave-button)] px-3 py-1 text-[12px] font-medium leading-none text-white">
+                  {categoryBadge}
+                </span>
+              )}
               <button
                 type="button"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--awave-border)] text-[var(--awave-text-light)] transition hover:border-[var(--awave-button)]/30"

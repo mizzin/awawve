@@ -41,6 +41,7 @@ const fetchMyFeeds = async (userId: string) => {
       user_id,
       content,
       image_url,
+      category,
       created_at,
       users:users!feeds_user_id_fkey(id, nickname, profile_image),
       feed_comments:feed_comments(id),
@@ -67,6 +68,7 @@ const fetchMyFeeds = async (userId: string) => {
       },
       content: item.content,
       imageUrl: item.image_url,
+      category: item.category,
       createdAt: item.created_at,
       commentCount: item.feed_comments?.length ?? 0,
       reactions: {

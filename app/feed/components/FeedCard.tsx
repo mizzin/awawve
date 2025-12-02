@@ -35,6 +35,7 @@ export type FeedCardData = {
   }
   content: string
   imageUrl?: string | null
+  category?: string | null
   createdAt: string
   commentCount?: number
   reactions?: {
@@ -145,6 +146,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
   const commentCount = feed.commentCount ?? 0
   const totalReactions = (feed.reactions?.like ?? 0) + (feed.reactions?.funny ?? 0) + (feed.reactions?.dislike ?? 0)
   const avatarSrc = feed.author.avatarUrl ?? generateAvatarSVG(feed.author.nickname, 40)
+  const categoryBadge = feed.category && feed.category.trim().length > 0 ? feed.category.trim() : null
 
   return (
     <article
@@ -157,7 +159,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
         readOnly ? "cursor-not-allowed opacity-90" : "cursor-pointer hover:shadow-md"
       )}
     >
-      <header className="flex items-center justify-between">
+      <header className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar className="size-10">
             <AvatarImage src={avatarSrc} alt={feed.author.nickname} className="object-cover" />
@@ -170,7 +172,14 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
             <p className="text-xs text-[var(--awave-text-light)]">{dateLabel}</p>
           </div>
         </div>
-        <span className="text-lg text-[var(--awave-text-light)]/70">⋯</span>
+        <div className="flex items-center gap-2">
+          {categoryBadge && (
+            <span className="inline-flex h-6 items-center justify-center rounded-full bg-[var(--awave-button)] px-3 py-1 text-[12px] font-medium leading-none text-white">
+              {categoryBadge}
+            </span>
+          )}
+          <span className="text-lg text-[var(--awave-text-light)]/70">⋯</span>
+        </div>
       </header>
 
       {feed.imageUrl && (
