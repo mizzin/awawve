@@ -25,6 +25,7 @@ export async function GET(req: Request) {
   })
 
   const data = await res.json()
+console.log("autocomplete result:", data)
 
   return NextResponse.json({ ok: true, predictions: data.predictions ?? [] })
 }
