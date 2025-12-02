@@ -34,7 +34,14 @@ export async function GET(req: Request) {
     console.log("[autocomplete] status:", res.status, "body:", text)
 
     if (!res.ok) {
-      return NextResponse.json({ ok: false, predictions: [], error: "google api error" })
+      // Bubble up status/body for easier debugging in the browser console
+      return NextResponse.json({
+        ok: false,
+        predictions: [],
+        error: "google api error",
+        status: res.status,
+        detail: text,
+      })
     }
 
     const data = text ? JSON.parse(text) : {}
