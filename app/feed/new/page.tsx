@@ -448,6 +448,16 @@ export default function NewFeedPage() {
                 <MapPin className="size-5 text-[var(--awave-primary)]" />
                 장소 추가
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
+                onClick={() => setIsSearchModalOpen(true)}
+                disabled={isLocked}
+              >
+                <Search className="size-5 text-[var(--awave-primary)]" />
+                장소 검색으로 추가
+              </Button>
 
               {location && (
                 <div className="space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] p-4">
