@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY
 
   if (!apiKey || !query) {
-    return NextResponse.json({ ok: false, error: "missing query/apiKey" })
+    return NextResponse.json({ ok: false, predictions: [] })
   }
 
   const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
@@ -15,19 +15,16 @@ export async function GET(req: Request) {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
       "X-Goog-FieldMask":
-        "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat",
+        "predictions.placeId,predictions.structuredFormat.mainText.text,predictions.structuredFormat.secondaryText.text"
     },
     body: JSON.stringify({
       input: query,
       languageCode: "ko",
-      includedPrimaryTypes: ["restaurant", "cafe", "bar", "store", "point_of_interest"]
+      regionCode: "PH"
     }),
   })
 
   const data = await res.json()
 
-  return NextResponse.json({
-    ok: true,
-    predictions: data?.suggestions ?? [] 
-  })
+  return NextResponse.json({ ok: true, predictions: data.predictions ?? [] })
 }
