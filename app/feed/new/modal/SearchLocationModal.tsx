@@ -49,8 +49,10 @@ export default function SearchLocationModal({ isOpen, onClose, onSelect }: Searc
       setResults([])
       return
     }
+    console.log("[client] query typing:", value)
     setLoading(true)
     const data = await fetchAutocomplete(value)
+    console.log("[client] autocomplete response:", data)
     if (data.ok) {
       setResults(data.predictions ?? [])
     } else {
