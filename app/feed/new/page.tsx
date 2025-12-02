@@ -148,13 +148,13 @@ export default function NewFeedPage() {
   const [body, setBody] = useState("")
   const [media, setMedia] = useState<MediaPreview | null>(null)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false)
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [location, setLocation] = useState<SelectedLocation | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
-  const [showSearchBox, setShowSearchBox] = useState(false)
   const { isLocked, isAuthenticated, lockReason, authUser } = useUserAccess(1)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -215,7 +215,6 @@ export default function NewFeedPage() {
           isCustom: false,
         }
         onSelect(loc)
-        setShowSearchBox(false)
         setSearchQuery("")
         setSearchResults([])
       }
@@ -443,7 +442,7 @@ export default function NewFeedPage() {
                 type="button"
                 variant="outline"
                 className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
-                onClick={() => setIsLocationModalOpen(true)}
+                onClick={() => setIsMapModalOpen(true)}
                 disabled={isLocked}
               >
                 <MapPin className="size-5 text-[var(--awave-primary)]" />
@@ -514,15 +513,32 @@ export default function NewFeedPage() {
           </div>
         </form>
 
-        {isLocationModalOpen && (
-          <LocationModal
+        {isMapModalOpen && (
+          <MapModal
             selectedLocation={location}
-            onClose={() => setIsLocationModalOpen(false)}
-            isOpen={isLocationModalOpen}
+            onClose={() => setIsMapModalOpen(false)}
+            isOpen={isMapModalOpen}
             onSelect={(loc) => {
               setLocation(loc)
-              setIsLocationModalOpen(false)
+              setIsMapModalOpen(false)
             }}
+          />
+        )}
+        {isSearchModalOpen && (
+          <SearchModal
+            isOpen={isSearchModalOpen}
+            onClose={() => setIsSearchModalOpen(false)}
+            onSelect={(loc) => {
+              setLocation(loc)
+              setIsSearchModalOpen(false)
+            }}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchResults={searchResults}
+            setSearchResults={setSearchResults}
+            isSearching={isSearching}
+            fetchAutocomplete={fetchAutocomplete}
+            selectPlace={selectPlace}
           />
         )}
       </div>
@@ -535,31 +551,26 @@ type LocationModalProps = {
   isOpen: boolean
   onSelect: (location: SelectedLocation) => void
   onClose: () => void
+}
+
+type SearchModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  onSelect: (location: SelectedLocation) => void
   searchQuery: string
   setSearchQuery: (value: string) => void
   searchResults: any[]
   setSearchResults: (value: any[]) => void
   isSearching: boolean
-  showSearchBox: boolean
-  setShowSearchBox: (value: boolean) => void
   fetchAutocomplete: (text: string) => Promise<void>
   selectPlace: (placeId: string, onSelect: (loc: SelectedLocation) => void) => Promise<void>
 }
 
-function LocationModal({
+function MapModal({
   selectedLocation,
   onClose,
   onSelect,
   isOpen,
-  searchQuery,
-  setSearchQuery,
-  searchResults,
-  setSearchResults,
-  isSearching,
-  showSearchBox,
-  setShowSearchBox,
-  fetchAutocomplete,
-  selectPlace,
 }: LocationModalProps) {
   const [query, setQuery] = useState("")
   const [pinLocation, setPinLocation] = useState<SelectedLocation | null>(() =>
@@ -769,51 +780,26 @@ function LocationModal({
         </div>
 
         <div className="mt-5 space-y-3">
-          <button
-            type="button"
-            onClick={() => setShowSearchBox(true)}
-            className="w-full rounded-xl border px-4 py-3 text-left text-sm bg-[var(--awave-secondary)]"
-          >
-            🔍 장소 이름으로 검색하기
-          </button>
-
-          {showSearchBox && (
-            <div className="mt-4 rounded-xl border bg-white p-4 shadow-md">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  void fetchAutocomplete(e.target.value)
-                }}
-                placeholder="스타벅스, 맛집, 카페 검색…"
-                className="w-full rounded-xl border px-3 py-2 text-sm"
-              />
-              {isSearching && <p className="mt-2 text-xs text-gray-500">검색 중…</p>}
-              <div className="mt-2 max-h-60 overflow-y-auto">
-                {searchResults.map((p: any) => (
-                  <div
-                    key={p.placePrediction.placeId}
-                    onClick={() => void selectPlace(p.placePrediction.placeId, onSelect)}
-                    className="cursor-pointer rounded-lg border-b px-3 py-2 hover:bg-gray-100"
-                  >
-                    <p className="text-sm font-medium">{p.placePrediction.structuredFormat.mainText.text}</p>
-                    <p className="text-xs text-gray-500">
-                      {p.placePrediction.structuredFormat.secondaryText?.text}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowSearchBox(false)}
-                className="mt-3 text-xs text-gray-500"
-              >
-                닫기
-              </button>
-            </div>
-          )}
-
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 rounded-xl border-[var(--awave-border)] bg-white py-4 text-sm font-medium text-[var(--awave-text)]"
+              onClick={() => setIsMapModalOpen(true)}
+              disabled={isLocked}
+            >
+              🗺️ 지도에서 선택하기
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 rounded-xl border-[var(--awave-border)] bg-white py-4 text-sm font-medium text-[var(--awave-text)]"
+              onClick={() => setIsSearchModalOpen(true)}
+              disabled={isLocked}
+            >
+              🔍 검색으로 선택하기
+            </Button>
+          </div>
           <div className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
             <div ref={mapRef} className="absolute inset-0" />
             {!pinLocation && (
@@ -882,7 +868,7 @@ function LocationModal({
       {searchResults.map((p: any) => (
         <div
           key={p.placePrediction.placeId}
-          onClick={() => selectPlace(p.placePrediction.placeId)}
+          onClick={() => selectPlace(p.placePrediction.placeId, onSelect)}
           className="cursor-pointer rounded-lg px-3 py-2 hover:bg-gray-100 border-b"
         >
           <p className="text-sm font-medium">
@@ -909,6 +895,80 @@ function LocationModal({
 
         </div>
 
+      </div>
+    </div>
+  )
+}
+
+function SearchModal({
+  isOpen,
+  onClose,
+  onSelect,
+  searchQuery,
+  setSearchQuery,
+  searchResults,
+  setSearchResults,
+  isSearching,
+  fetchAutocomplete,
+  selectPlace,
+}: SearchModalProps) {
+  if (!isOpen) return null
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 px-0 pb-0">
+      <button type="button" className="flex-1" aria-label="모달 닫기" onClick={onClose} />
+      <div
+        className="relative rounded-t-xl bg-white px-5 pb-8 pt-5 shadow-[0_-4px_40px_rgba(0,0,0,0.12)]"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <p className="text-base font-semibold text-[var(--awave-text)]">장소 검색</p>
+            <p className="text-xs text-[var(--awave-text-light)]">가게 이름, 카페, 장소를 검색해보세요.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--awave-secondary)] text-[var(--awave-text-light)]"
+            aria-label="닫기"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value)
+            void fetchAutocomplete(e.target.value)
+          }}
+          placeholder="스타벅스, 맛집, 카페 검색…"
+          className="w-full rounded-xl border px-3 py-2 text-sm"
+        />
+        {isSearching && <p className="mt-2 text-xs text-gray-500">검색 중…</p>}
+        <div className="mt-2 max-h-60 overflow-y-auto">
+          {searchResults.map((p: any) => (
+            <div
+              key={p.placePrediction.placeId}
+              onClick={async () => {
+                await selectPlace(p.placePrediction.placeId, onSelect)
+                onClose()
+              }}
+              className="cursor-pointer rounded-lg border-b px-3 py-2 hover:bg-gray-100"
+            >
+              <p className="text-sm font-medium">{p.placePrediction.structuredFormat.mainText.text}</p>
+              <p className="text-xs text-gray-500">
+                {p.placePrediction.structuredFormat.secondaryText?.text}
+              </p>
+            </div>
+          ))}
+          {searchResults.length === 0 && !isSearching && (
+            <p className="mt-2 text-xs text-gray-500">검색 결과가 없습니다.</p>
+          )}
+        </div>
+        <button type="button" onClick={onClose} className="mt-3 text-xs text-gray-500">
+          닫기
+        </button>
       </div>
     </div>
   )
