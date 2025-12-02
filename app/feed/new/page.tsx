@@ -1,13 +1,12 @@
 "use client"
 
-import { ChangeEvent, FormEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { ImageIcon, LoaderCircle, MapPin, Search, X } from "lucide-react"
+import { ImageIcon, LoaderCircle, X } from "lucide-react"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { supabase } from "@/lib/supabaseClient"
 import { cn } from "@/lib/utils"
 import { useUserAccess } from "@/lib/useUserAccess"
@@ -15,15 +14,6 @@ import { useUserAccess } from "@/lib/useUserAccess"
 const MAX_CHAR_COUNT = 300
 const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
 const TASTE_TAGS = ["여행", "식당", "마트", "카페", "화장품", "자동차", "호텔"]
-const DEFAULT_MAP_CENTER = { lat: 14.5534, lng: 121.0445 } // BGC 기본 좌표
-
-type SelectedLocation = {
-  placeName: string
-  address: string
-  lat: number
-  lng: number
-  isCustom?: boolean
-}
 
 type MediaPreview = {
   file: File
@@ -44,54 +34,6 @@ const buildFeedImagePath = (file: File) => {
 
   return `feed/${dateFolder}/${uniqueSegment}.${extension}`
 }
-
-const loadGoogleMaps = (apiKey?: string) =>
-  new Promise<any | null>((resolve) => {
-    console.log("[maps] load start", apiKey ? "has-key" : "no-key")
-    if (typeof window === "undefined") return resolve(null)
-    const w = window as typeof window & { google?: any }
-    if (w.google?.maps) {
-      console.log("[maps] already loaded")
-      return resolve(w.google)
-    }
-    if (!apiKey) {
-      console.warn("[maps] missing api key")
-      return resolve(null)
-    }
-
-    const existing = document.getElementById("google-maps-sdk") as HTMLScriptElement | null
-    if (existing) {
-      if ((window as any).google?.maps) {
-        console.log("[maps] existing script and google present")
-        return resolve((window as any).google)
-      }
-      existing.addEventListener("load", () => {
-        console.log("[maps] existing script load event")
-        resolve((window as any).google ?? null)
-      })
-      existing.addEventListener("error", () => {
-        console.error("[maps] existing script load error")
-        resolve(null)
-      })
-      // 방어: 이미 로드됐는데 google이 없는 경우도 즉시 종료
-      setTimeout(() => resolve((window as any).google ?? null), 0)
-      return
-    }
-
-    const script = document.createElement("script")
-    script.id = "google-maps-sdk"
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`
-    script.async = true
-    script.onload = () => {
-      console.log("[maps] script loaded")
-      resolve((window as any).google ?? null)
-    }
-    script.onerror = () => {
-      console.error("[maps] script load error")
-      resolve(null)
-    }
-    document.head.appendChild(script)
-  })
 
 const compressImage = async (file: File, maxSize = 1280, quality = 0.82): Promise<File> => {
   const imageBitmap = await createImageBitmap(file)
@@ -148,13 +90,7 @@ export default function NewFeedPage() {
   const [body, setBody] = useState("")
   const [media, setMedia] = useState<MediaPreview | null>(null)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
-  const [isMapModalOpen, setIsMapModalOpen] = useState(false)
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
-  const [location, setLocation] = useState<SelectedLocation | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [isSearching, setIsSearching] = useState(false)
   const { isLocked, isAuthenticated, lockReason, authUser } = useUserAccess(1)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -180,47 +116,6 @@ export default function NewFeedPage() {
     const nextValue = event.target.value.slice(0, MAX_CHAR_COUNT)
     setBody(nextValue)
   }
-
-  const fetchAutocomplete = useCallback(
-    async (text: string) => {
-      if (!text.trim()) {
-        setSearchResults([])
-        return
-      }
-      setIsSearching(true)
-      try {
-        const res = await fetch(`/api/maps/autocomplete?query=${encodeURIComponent(text)}`)
-        const data = await res.json()
-        if (data.ok) {
-          setSearchResults(data.predictions)
-        }
-      } finally {
-        setIsSearching(false)
-      }
-    },
-    []
-  )
-
-  const selectPlace = useCallback(
-    async (placeId: string, onSelect: (loc: SelectedLocation) => void) => {
-      const res = await fetch(`/api/maps/detail?placeId=${encodeURIComponent(placeId)}`)
-      const data = await res.json()
-
-      if (data.ok && data.place) {
-        const loc: SelectedLocation = {
-          placeName: data.place.name,
-          address: data.place.address,
-          lat: data.place.lat,
-          lng: data.place.lng,
-          isCustom: false,
-        }
-        onSelect(loc)
-        setSearchQuery("")
-        setSearchResults([])
-      }
-    },
-    []
-  )
 
   const handleMediaChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -268,9 +163,9 @@ export default function NewFeedPage() {
         user_id: userId,
         content: body.trim(),
         image_url: uploadedImageUrl,
-        address: location?.address ?? null,
-        latitude: location?.lat ?? null,
-        longitude: location?.lng ?? null,
+        address: null,
+        latitude: null,
+        longitude: null,
         // Additional fields left as defaults (counts, flags, timestamps)
       })
 
@@ -424,76 +319,7 @@ export default function NewFeedPage() {
               </div>
             </section>
 
-            <section className="mt-8 space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-[var(--awave-text-light)]">위치 추가 (선택)</p>
-                {location ? (
-                  <button
-                    type="button"
-                    onClick={() => setLocation(null)}
-                    className="text-xs font-medium text-[var(--awave-text-light)]"
-                    disabled={isLocked}
-                  >
-                    제거
-                  </button>
-                ) : null}
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
-                onClick={() => setIsMapModalOpen(true)}
-                disabled={isLocked}
-              >
-                <MapPin className="size-5 text-[var(--awave-primary)]" />
-                장소 추가
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
-                onClick={() => setIsSearchModalOpen(true)}
-                disabled={isLocked}
-              >
-                <Search className="size-5 text-[var(--awave-primary)]" />
-                장소 검색으로 추가
-              </Button>
-
-              {location && (
-                <div className="space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-base font-semibold text-[var(--awave-text)]">
-                        {location.placeName}
-                      </p>
-                      <p className="text-sm text-[var(--awave-text-light)]">{location.address}</p>
-                      <p className="text-xs text-[var(--awave-text-light)]">
-                        {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-[var(--awave-text-light)] hover:text-[var(--awave-text)]"
-                      onClick={() => setLocation(null)}
-                      disabled={isLocked}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </div>
-                  <div className="overflow-hidden rounded-xl border border-[var(--awave-border)]">
-                    <iframe
-                      title="선택한 위치 미리보기"
-                      src={`https://www.google.com/maps?q=${location.lat},${location.lng}&z=16&output=embed`}
-                      className="h-48 w-full"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
-                  </div>
-                </div>
-              )}
-            </section>
+            {/* 위치 추가 기능 제거됨 */}
 
             <div className="mt-12 text-xs text-[var(--awave-text-light)]">
               사진, 태그, 위치는 모두 선택 사항이에요. 본문만으로도 바로 등록할 수 있어요.
@@ -523,372 +349,7 @@ export default function NewFeedPage() {
           </div>
         </form>
 
-        {isMapModalOpen && (
-          <MapModal
-            selectedLocation={location}
-            onClose={() => setIsMapModalOpen(false)}
-            isOpen={isMapModalOpen}
-            onSelect={(loc) => {
-              setLocation(loc)
-              setIsMapModalOpen(false)
-            }}
-          />
-        )}
-        {isSearchModalOpen && (
-          <SearchModal
-            isOpen={isSearchModalOpen}
-            onClose={() => setIsSearchModalOpen(false)}
-            onSelect={(loc) => {
-              setLocation(loc)
-              setIsSearchModalOpen(false)
-            }}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            searchResults={searchResults}
-            setSearchResults={setSearchResults}
-            isSearching={isSearching}
-            fetchAutocomplete={fetchAutocomplete}
-            selectPlace={selectPlace}
-          />
-        )}
       </div>
     </UserLayout>
-  )
-}
-
-type LocationModalProps = {
-  selectedLocation: SelectedLocation | null
-  isOpen: boolean
-  onSelect: (location: SelectedLocation) => void
-  onClose: () => void
-}
-
-type SearchModalProps = {
-  isOpen: boolean
-  onClose: () => void
-  onSelect: (location: SelectedLocation) => void
-  searchQuery: string
-  setSearchQuery: (value: string) => void
-  searchResults: any[]
-  setSearchResults: (value: any[]) => void
-  isSearching: boolean
-  fetchAutocomplete: (text: string) => Promise<void>
-  selectPlace: (placeId: string, onSelect: (loc: SelectedLocation) => void) => Promise<void>
-}
-
-function MapModal({
-  selectedLocation,
-  onClose,
-  onSelect,
-  isOpen,
-}: LocationModalProps) {
-  const [pinLocation, setPinLocation] = useState<SelectedLocation | null>(() =>
-    selectedLocation?.isCustom ? selectedLocation : null
-  )
-  const mapRef = useRef<HTMLDivElement | null>(null)
-  const mapInstanceRef = useRef<any>(null)
-  const markerRef = useRef<any>(null)
-  const mapsLoadedRef = useRef(false)
-  const mountedRef = useRef(false)
-
-  const initializeMap = async () => {
-    if (mapsLoadedRef.current || !mapRef.current) {
-      return
-    }
-    const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
-    if (!google) {
-      return
-    }
-    const center = selectedLocation
-      ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
-      : DEFAULT_MAP_CENTER
-
-    let map: any = null
-    try {
-      map = new google.maps.Map(mapRef.current, {
-        center,
-        zoom: 15,
-        disableDefaultUI: true,
-        clickableIcons: true,
-      })
-    } catch (err) {
-      console.error("[maps] map init error", err)
-      return
-    }
-
-    mapInstanceRef.current = map
-    const placeMarker = (lat: number, lng: number, label?: string) => {
-      const position = { lat, lng }
-      if (!markerRef.current) {
-        markerRef.current = new google.maps.Marker({
-          position,
-          map,
-        })
-      } else {
-        markerRef.current.setPosition(position)
-      }
-      map.panTo(position)
-      const text = label?.trim()
-      const nextLocation: SelectedLocation = {
-        placeName: text || "사용자 지정 위치",
-        address: text || "핀으로 지정한 위치",
-        lat: Number(lat.toFixed(6)),
-        lng: Number(lng.toFixed(6)),
-        isCustom: true,
-      }
-      setPinLocation(nextLocation)
-      return nextLocation
-    }
-
-    if (selectedLocation) {
-      const loc = placeMarker(selectedLocation.lat, selectedLocation.lng, selectedLocation.address)
-      if (loc) {
-        onSelect(loc)
-      }
-    }
-
-    map.addListener("click", async (event: any) => {
-      const latFromEvent = event?.latLng?.lat?.()
-      const lngFromEvent = event?.latLng?.lng?.()
-      const placeId = event?.placeId
-
-      if (placeId) {
-        if (event.stop) event.stop()
-        try {
-          const paramLat = latFromEvent !== undefined ? `&lat=${latFromEvent}` : ""
-          const paramLng = lngFromEvent !== undefined ? `&lng=${lngFromEvent}` : ""
-          const res = await fetch(`/api/maps/place?placeId=${placeId}${paramLat}${paramLng}`)
-          const data = await res.json()
-          if (data?.place) {
-            const placeName = data.place.name || "사용자 지정 위치"
-            const address = data.place.address || "주소 없음"
-            const lat = data.place.lat ?? latFromEvent
-            const lng = data.place.lng ?? lngFromEvent
-            if (lat !== undefined && lng !== undefined) {
-              placeMarker(lat, lng, placeName)
-              onSelect({
-                placeName,
-                address,
-                lat: Number(lat.toFixed(6)),
-                lng: Number(lng.toFixed(6)),
-                isCustom: false,
-              })
-              onClose()
-              return
-            }
-          }
-        } catch (error) {
-          console.error("[maps] place detail fetch error", error)
-        }
-        // placeId 처리 실패 시 lat/lng로 계속 진행
-      }
-
-      if (latFromEvent === undefined || lngFromEvent === undefined) {
-        console.warn("[maps] no lat/lng from event")
-        return
-      }
-
-      const lat = latFromEvent
-      const lng = lngFromEvent
-      console.log("[maps] normal click", lat, lng)
-
-      try {
-        const res = await fetch(`/api/maps/place?lat=${lat}&lng=${lng}`)
-        const data = await res.json()
-
-        const placeName = data?.place?.name || "사용자 지정 위치"
-        const address = data?.address || data?.place?.vicinity || "주소 없음"
-
-        placeMarker(lat, lng, placeName)
-
-        onSelect({
-          placeName,
-          address,
-          lat: Number(lat.toFixed(6)),
-          lng: Number(lng.toFixed(6)),
-          isCustom: false,
-        })
-        onClose()
-      } catch (error) {
-        console.error("[maps] place fetch error", error)
-      }
-    })
-
-
-    mapInstanceRef.current = map
-    mapsLoadedRef.current = true
-  }
-
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-      if (markerRef.current) {
-        markerRef.current.setMap(null)
-        markerRef.current = null
-      }
-      mapInstanceRef.current = null
-      mapsLoadedRef.current = false
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isOpen) {
-      return
-    }
-    const timer = setTimeout(() => {
-      if (!mountedRef.current) return
-      void initializeMap()
-    }, 60)
-    return () => {
-      clearTimeout(timer)
-      if (markerRef.current) {
-        markerRef.current.setMap(null)
-        markerRef.current = null
-      }
-      mapInstanceRef.current = null
-      mapsLoadedRef.current = false
-    }
-  }, [isOpen])
-
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 px-0 pb-0">
-      <button
-        type="button"
-        className="flex-1"
-        aria-label="모달 닫기"
-        onClick={onClose}
-      />
-      <div
-        className="relative rounded-t-xl bg-white px-5 pb-8 pt-5 shadow-[0_-4px_40px_rgba(0,0,0,0.12)]"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-base font-semibold text-[var(--awave-text)]">장소 추가</p>
-            <p className="text-xs text-[var(--awave-text-light)]">지도를 눌러 핀을 찍을 수 있어요.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--awave-secondary)] text-[var(--awave-text-light)]"
-            aria-label="닫기"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          <div className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
-            <div ref={mapRef} className="absolute inset-0" />
-            {!pinLocation && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-b from-white/40 via-white/20 to-transparent text-sm font-medium text-[var(--awave-text-light)] pointer-events-none">
-                터치해서 핀 놓기
-                <span className="mt-1 text-[10px]">BGC 기준 지도</span>
-              </div>
-            )}
-          </div>
-          {pinLocation && (
-            <div className="rounded-xl bg-[var(--awave-secondary)] p-3 text-sm text-[var(--awave-text)]">
-              <div className="flex items-center justify-between">
-                <div>
-                    <p className="font-semibold text-[var(--awave-text)]">{pinLocation.placeName}</p>
-                    <p className="text-xs text-[var(--awave-text-light)]">{pinLocation.address}</p>
-                    <p className="text-xs text-[var(--awave-text-light)]">
-                      {pinLocation.lat.toFixed(4)}, {pinLocation.lng.toFixed(4)}
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="rounded-full bg-[var(--awave-primary)] px-4 py-2 text-xs font-semibold text-white"
-                  onClick={() => {
-                    onSelect(pinLocation)
-                    onClose()
-                  }}
-                >
-                  이 위치 선택
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-      </div>
-    </div>
-  )
-}
-
-function SearchModal({
-  isOpen,
-  onClose,
-  onSelect,
-  searchQuery,
-  setSearchQuery,
-  searchResults,
-  setSearchResults,
-  isSearching,
-  fetchAutocomplete,
-  selectPlace,
-}: SearchModalProps) {
-  if (!isOpen) return null
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 px-0 pb-0">
-      <button type="button" className="flex-1" aria-label="모달 닫기" onClick={onClose} />
-      <div
-        className="relative rounded-t-xl bg-white px-5 pb-8 pt-5 shadow-[0_-4px_40px_rgba(0,0,0,0.12)]"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <p className="text-base font-semibold text-[var(--awave-text)]">장소 검색</p>
-            <p className="text-xs text-[var(--awave-text-light)]">가게 이름, 카페, 장소를 검색해보세요.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--awave-secondary)] text-[var(--awave-text-light)]"
-            aria-label="닫기"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value)
-            void fetchAutocomplete(e.target.value)
-          }}
-          placeholder="스타벅스, 맛집, 카페 검색…"
-          className="w-full rounded-xl border px-3 py-2 text-sm"
-        />
-        {isSearching && <p className="mt-2 text-xs text-gray-500">검색 중…</p>}
-        <div className="mt-2 max-h-60 overflow-y-auto">
-          {searchResults.map((p: any) => (
-            <div
-              key={p.placePrediction.placeId}
-              onClick={async () => {
-                await selectPlace(p.placePrediction.placeId, onSelect)
-                onClose()
-              }}
-              className="cursor-pointer rounded-lg border-b px-3 py-2 hover:bg-gray-100"
-            >
-              <p className="text-sm font-medium">{p.placePrediction.structuredFormat.mainText.text}</p>
-              <p className="text-xs text-gray-500">
-                {p.placePrediction.structuredFormat.secondaryText?.text}
-              </p>
-            </div>
-          ))}
-          {searchResults.length === 0 && !isSearching && (
-            <p className="mt-2 text-xs text-gray-500">검색 결과가 없습니다.</p>
-          )}
-        </div>
-        <button type="button" onClick={onClose} className="mt-3 text-xs text-gray-500">
-          닫기
-        </button>
-      </div>
-    </div>
   )
 }
