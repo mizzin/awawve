@@ -4,7 +4,6 @@ import { ChangeEvent, FormEvent, MouseEvent, useCallback, useEffect, useMemo, us
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ImageIcon, LoaderCircle, MapPin, Search, X } from "lucide-react"
-import { useState } from "react"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
