@@ -497,7 +497,7 @@ export default function FeedDetailPage() {
               </div>
               </div>
 
-            <div className="relative flex items-start gap-2" ref={menuRef}>
+            <div className="relative z-20 flex items-start gap-2" ref={menuRef}>
               {categoryBadge && (
                 <span className="inline-flex h-6 items-center justify-center rounded-full bg-[var(--awave-button)] px-3 py-1 text-[12px] font-medium leading-none text-white">
                   {categoryBadge}
@@ -512,7 +512,7 @@ export default function FeedDetailPage() {
                 <MoreHorizontal className="size-5" />
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-12 w-36 rounded-xl border border-[var(--awave-border)] bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
+                <div className="absolute right-0 top-12 z-30 w-36 rounded-xl border border-[var(--awave-border)] bg-white py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                   {menuItems.map((item) => (
                     <button
                       key={item.label}
