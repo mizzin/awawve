@@ -14,15 +14,20 @@ export async function GET(req: Request) {
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "placePrediction.structuredFormat,placePrediction.placeId",
+      "X-Goog-FieldMask":
+        "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat",
     },
     body: JSON.stringify({
       input: query,
-      includedPrimaryTypes: ["restaurant", "cafe", "store", "point_of_interest"],
       languageCode: "ko",
+      includedPrimaryTypes: ["restaurant", "cafe", "bar", "store", "point_of_interest"]
     }),
   })
 
   const data = await res.json()
-  return NextResponse.json({ ok: true, predictions: data?.predictions ?? [] })
+
+  return NextResponse.json({
+    ok: true,
+    predictions: data?.suggestions ?? [] 
+  })
 }

@@ -3,17 +3,26 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { ImageIcon, LoaderCircle, X } from "lucide-react"
+import { ImageIcon, LoaderCircle, Search, X } from "lucide-react"
 
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabaseClient"
 import { cn } from "@/lib/utils"
 import { useUserAccess } from "@/lib/useUserAccess"
+import SearchLocationModal from "@/app/feed/new/modal/SearchLocationModal"
 
 const MAX_CHAR_COUNT = 300
 const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
 const TASTE_TAGS = ["여행", "식당", "마트", "카페", "화장품", "자동차", "호텔"]
+
+type SelectedLocation = {
+  placeName: string
+  address: string
+  lat: number
+  lng: number
+  isCustom?: boolean
+}
 
 type MediaPreview = {
   file: File
@@ -90,6 +99,8 @@ export default function NewFeedPage() {
   const [body, setBody] = useState("")
   const [media, setMedia] = useState<MediaPreview | null>(null)
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const [location, setLocation] = useState<SelectedLocation | null>(null)
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { isLocked, isAuthenticated, lockReason, authUser } = useUserAccess(1)
 
@@ -163,9 +174,9 @@ export default function NewFeedPage() {
         user_id: userId,
         content: body.trim(),
         image_url: uploadedImageUrl,
-        address: null,
-        latitude: null,
-        longitude: null,
+        address: location?.address ?? null,
+        latitude: location?.lat ?? null,
+        longitude: location?.lng ?? null,
         // Additional fields left as defaults (counts, flags, timestamps)
       })
 
@@ -319,7 +330,55 @@ export default function NewFeedPage() {
               </div>
             </section>
 
-            {/* 위치 추가 기능 제거됨 */}
+            <section className="mt-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-[var(--awave-text-light)]">위치 추가 (선택)</p>
+                {location ? (
+                  <button
+                    type="button"
+                    onClick={() => setLocation(null)}
+                    className="text-xs font-medium text-[var(--awave-text-light)]"
+                    disabled={isLocked}
+                  >
+                    제거
+                  </button>
+                ) : null}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="justify-start gap-2 rounded-xl border-[var(--awave-border)] bg-white py-6 text-base font-medium text-[var(--awave-text)]"
+                onClick={() => setIsSearchModalOpen(true)}
+                disabled={isLocked}
+              >
+                <Search className="size-5 text-[var(--awave-primary)]" />
+                위치 추가하기
+              </Button>
+
+              {location && (
+                <div className="space-y-3 rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-base font-semibold text-[var(--awave-text)]">{location.placeName}</p>
+                      <p className="text-sm text-[var(--awave-text-light)]">{location.address}</p>
+                      <p className="text-xs text-[var(--awave-text-light)]">
+                        {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-[var(--awave-text-light)] hover:text-[var(--awave-text)]"
+                      onClick={() => setLocation(null)}
+                      disabled={isLocked}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </section>
 
             <div className="mt-12 text-xs text-[var(--awave-text-light)]">
               사진, 태그, 위치는 모두 선택 사항이에요. 본문만으로도 바로 등록할 수 있어요.
@@ -349,6 +408,14 @@ export default function NewFeedPage() {
           </div>
         </form>
 
+        <SearchLocationModal
+          isOpen={isSearchModalOpen}
+          onClose={() => setIsSearchModalOpen(false)}
+          onSelect={(loc) => {
+            setLocation(loc)
+            setIsSearchModalOpen(false)
+          }}
+        />
       </div>
     </UserLayout>
   )
