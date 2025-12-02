@@ -124,7 +124,9 @@ export default function FeedDetailPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([])
   const [commentSubmitting, setCommentSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [reactions, setReactions] = useState<ReactionRow[]>([])
+  const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
 
   const menuRef = useRef<HTMLDivElement | null>(null)
   const closeMenu = useCallback(() => setMenuOpen(false), [])
@@ -380,11 +382,64 @@ export default function FeedDetailPage() {
   const isMine = post?.author.id && authUserId ? authUserId === post.author.id : false
   const renderContent = useCallback((text: string) => linkifyText(text), [])
 
+  const handleDelete = useCallback(async () => {
+    if (!post?.id || deleting) return
+    const confirmed = window.confirm("이 피드와 댓글/반응/이미지/주소 정보를 모두 삭제할까요?")
+    if (!confirmed) return
+
+    setDeleting(true)
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) {
+      alert("로그인 후 삭제할 수 있습니다.")
+      setDeleting(false)
+      return
+    }
+
+    if (!isMine) {
+      alert("본인 게시물만 삭제할 수 있습니다.")
+      setDeleting(false)
+      return
+    }
+
+    // 1) 이미지 삭제 (스토리지)
+    if (post.imageUrl && FEED_IMAGE_BUCKET) {
+      const storagePath = extractStoragePath(post.imageUrl, FEED_IMAGE_BUCKET)
+      if (storagePath) {
+        const { error: storageError } = await supabase.storage.from(FEED_IMAGE_BUCKET).remove([storagePath])
+        if (storageError) {
+          console.error("[feed delete] storage delete error", storageError)
+        }
+      }
+    }
+
+    // 2) 삭제: 댓글 -> 반응 -> 피드 (순서 보존)
+    const deleteComments = supabase.from("feed_comments").delete().eq("feed_id", post.id)
+    const deleteReactions = supabase.from("feed_reactions").delete().eq("feed_id", post.id)
+    const deleteFeed = supabase.from("feeds").delete().eq("id", post.id)
+
+    const [{ error: commentsError }, { error: reactionsError }, { error: feedError }] = await Promise.all([
+      deleteComments,
+      deleteReactions,
+      deleteFeed,
+    ])
+
+    if (commentsError || reactionsError || feedError) {
+      console.error("[feed delete] error", { commentsError, reactionsError, feedError })
+      alert("삭제에 실패했습니다. 잠시 후 다시 시도해주세요.")
+      setDeleting(false)
+      return
+    }
+
+    alert("삭제되었습니다.")
+    router.push("/feed")
+  }, [post?.id, post?.imageUrl, deleting, isMine, router, FEED_IMAGE_BUCKET])
+
   const menuItems = isMine
     ? [
         { label: "수정", action: () => (post ? router.push(`/feed/${post.id}/edit`) : undefined) },
         { label: "공유", action: () => alert("공유 기능은 준비 중입니다.") },
-        { label: "삭제", action: () => alert("삭제 기능은 준비 중입니다.") },
+        { label: deleting ? "삭제 중..." : "삭제", action: () => void handleDelete(), disabled: deleting },
       ]
     : [
         { label: "신고", action: () => alert("신고가 접수되었습니다.") },
@@ -454,10 +509,12 @@ export default function FeedDetailPage() {
                       key={item.label}
                       type="button"
                       onClick={() => {
+                        if (item.disabled) return
                         item.action()
                         setMenuOpen(false)
                       }}
-                      className="block w-full px-4 py-2 text-left text-sm text-[var(--awave-text)] hover:bg-[var(--awave-secondary)]"
+                      disabled={item.disabled}
+                      className="block w-full px-4 py-2 text-left text-sm text-[var(--awave-text)] hover:bg-[var(--awave-secondary)] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {item.label}
                     </button>
@@ -669,4 +726,12 @@ function linkifyText(text: string) {
     }
     return <span key={`text-${index}`}>{part}</span>
   })
+}
+
+function extractStoragePath(publicUrl: string, bucket: string) {
+  // Supabase public URL format: .../object/public/<bucket>/<path>
+  const marker = `/object/public/${bucket}/`
+  const idx = publicUrl.indexOf(marker)
+  if (idx === -1) return null
+  return publicUrl.slice(idx + marker.length)
 }
