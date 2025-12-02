@@ -1,6 +1,6 @@
 "use client"
 
-import { ChangeEvent, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState } from "react"
+import { ChangeEvent, FormEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ImageIcon, LoaderCircle, MapPin, Search, X } from "lucide-react"
@@ -93,6 +93,44 @@ const loadGoogleMaps = (apiKey?: string) =>
     document.head.appendChild(script)
   })
 
+const fetchAutocomplete = async (text: string) => {
+  if (!text.trim()) {
+    setSearchResults([])
+    return
+  }
+  setIsSearching(true)
+
+  const res = await fetch(`/api/maps/autocomplete?query=${text}`)
+  const data = await res.json()
+
+  if (data.ok) {
+    setSearchResults(data.predictions)
+  }
+
+  setIsSearching(false)
+}
+
+const selectPlace = async (placeId: string) => {
+  const res = await fetch(`/api/maps/detail?placeId=${placeId}`)
+  const data = await res.json()
+
+  if (data.ok && data.place) {
+    onSelect({
+      placeName: data.place.name,
+      address: data.place.address,
+      lat: data.place.lat,
+      lng: data.place.lng,
+      isCustom: false
+    })
+
+    setShowSearchBox(false)        // 검색창 닫기
+    setSearchQuery("")
+    setSearchResults([])
+  }
+}
+
+
+
 const compressImage = async (file: File, maxSize = 1280, quality = 0.82): Promise<File> => {
   const imageBitmap = await createImageBitmap(file)
   const { width, height } = imageBitmap
@@ -151,6 +189,10 @@ export default function NewFeedPage() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
   const [location, setLocation] = useState<SelectedLocation | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showSearchBox, setShowSearchBox] = useState(false)
   const { isLocked, isAuthenticated, lockReason, authUser } = useUserAccess(1)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -176,6 +218,48 @@ export default function NewFeedPage() {
     const nextValue = event.target.value.slice(0, MAX_CHAR_COUNT)
     setBody(nextValue)
   }
+
+  const fetchAutocomplete = useCallback(
+    async (text: string) => {
+      if (!text.trim()) {
+        setSearchResults([])
+        return
+      }
+      setIsSearching(true)
+      try {
+        const res = await fetch(`/api/maps/autocomplete?query=${encodeURIComponent(text)}`)
+        const data = await res.json()
+        if (data.ok) {
+          setSearchResults(data.predictions)
+        }
+      } finally {
+        setIsSearching(false)
+      }
+    },
+    []
+  )
+
+  const selectPlace = useCallback(
+    async (placeId: string, onSelect: (loc: SelectedLocation) => void) => {
+      const res = await fetch(`/api/maps/detail?placeId=${encodeURIComponent(placeId)}`)
+      const data = await res.json()
+
+      if (data.ok && data.place) {
+        const loc: SelectedLocation = {
+          placeName: data.place.name,
+          address: data.place.address,
+          lat: data.place.lat,
+          lng: data.place.lng,
+          isCustom: false,
+        }
+        onSelect(loc)
+        setShowSearchBox(false)
+        setSearchQuery("")
+        setSearchResults([])
+      }
+    },
+    []
+  )
 
   const handleMediaChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -489,9 +573,32 @@ type LocationModalProps = {
   isOpen: boolean
   onSelect: (location: SelectedLocation) => void
   onClose: () => void
+  searchQuery: string
+  setSearchQuery: (value: string) => void
+  searchResults: any[]
+  setSearchResults: (value: any[]) => void
+  isSearching: boolean
+  showSearchBox: boolean
+  setShowSearchBox: (value: boolean) => void
+  fetchAutocomplete: (text: string) => Promise<void>
+  selectPlace: (placeId: string, onSelect: (loc: SelectedLocation) => void) => Promise<void>
 }
 
-function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: LocationModalProps) {
+function LocationModal({
+  selectedLocation,
+  onClose,
+  onSelect,
+  isOpen,
+  searchQuery,
+  setSearchQuery,
+  searchResults,
+  setSearchResults,
+  isSearching,
+  showSearchBox,
+  setShowSearchBox,
+  fetchAutocomplete,
+  selectPlace,
+}: LocationModalProps) {
   const [query, setQuery] = useState("")
   const [pinLocation, setPinLocation] = useState<SelectedLocation | null>(() =>
     selectedLocation?.isCustom ? selectedLocation : null
@@ -503,20 +610,11 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
   const mountedRef = useRef(false)
 
   const initializeMap = async () => {
-    console.log("[maps] init start", {
-      mounted: mountedRef.current,
-      loaded: mapsLoadedRef.current,
-      hasRef: Boolean(mapRef.current),
-    })
     if (mapsLoadedRef.current || !mapRef.current) {
-      console.log("[maps] INIT MAP", mapRef.current ?? null, mapsLoadedRef.current)
       return
     }
-    console.log("[maps] INIT MAP", mapRef.current ?? null, mapsLoadedRef.current)
     const google = await loadGoogleMaps(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
-    console.log("[maps] load result google?", Boolean(google))
     if (!google) {
-      console.warn("[maps] init blocked", { google: Boolean(google), hasRef: Boolean(mapRef.current) })
       return
     }
     const center = selectedLocation
@@ -568,15 +666,6 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
     }
 
     map.addListener("click", async (event: any) => {
-      // 🔥 디버그용 중요 로그
-      console.log("-------------------------------------------------")
-      console.log("[DEBUG] CLICK RAW EVENT:", event)
-      console.log("[DEBUG] event.placeId:", event.placeId)
-      console.log("[DEBUG] lat:", event?.latLng?.lat?.())
-      console.log("[DEBUG] lng:", event?.latLng?.lng?.())
-      console.log("-------------------------------------------------")
-      console.log("[maps] CLICK EVENT RAW:", event)
-
       const latFromEvent = event?.latLng?.lat?.()
       const lngFromEvent = event?.latLng?.lng?.()
       const placeId = event?.placeId
@@ -718,6 +807,51 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
         </div>
 
         <div className="mt-5 space-y-3">
+          <button
+            type="button"
+            onClick={() => setShowSearchBox(true)}
+            className="w-full rounded-xl border px-4 py-3 text-left text-sm bg-[var(--awave-secondary)]"
+          >
+            🔍 장소 이름으로 검색하기
+          </button>
+
+          {showSearchBox && (
+            <div className="mt-4 rounded-xl border bg-white p-4 shadow-md">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  void fetchAutocomplete(e.target.value)
+                }}
+                placeholder="스타벅스, 맛집, 카페 검색…"
+                className="w-full rounded-xl border px-3 py-2 text-sm"
+              />
+              {isSearching && <p className="mt-2 text-xs text-gray-500">검색 중…</p>}
+              <div className="mt-2 max-h-60 overflow-y-auto">
+                {searchResults.map((p: any) => (
+                  <div
+                    key={p.placePrediction.placeId}
+                    onClick={() => void selectPlace(p.placePrediction.placeId, onSelect)}
+                    className="cursor-pointer rounded-lg border-b px-3 py-2 hover:bg-gray-100"
+                  >
+                    <p className="text-sm font-medium">{p.placePrediction.structuredFormat.mainText.text}</p>
+                    <p className="text-xs text-gray-500">
+                      {p.placePrediction.structuredFormat.secondaryText?.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSearchBox(false)}
+                className="mt-3 text-xs text-gray-500"
+              >
+                닫기
+              </button>
+            </div>
+          )}
+
           <div className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
             <div ref={mapRef} className="absolute inset-0" />
             {!pinLocation && (
@@ -751,6 +885,66 @@ function LocationModal({ selectedLocation, onClose, onSelect, isOpen }: Location
               </div>
             </div>
           )}
+          {/* 🔍 장소 검색 버튼 */}
+<button
+  type="button"
+  onClick={() => setShowSearchBox(true)}
+  className="w-full rounded-xl border px-4 py-3 text-left text-sm bg-[var(--awave-secondary)]">
+  🔍 장소 이름으로 검색하기
+</button>
+
+
+{/* 🔍 장소 검색 모달 UI */}
+{showSearchBox && (
+  <div className="mt-4 rounded-xl border bg-white p-4 shadow-md">
+    
+    {/* 검색 입력창 */}
+    <input
+      type="text"
+      value={searchQuery}
+      onChange={(e) => {
+        setSearchQuery(e.target.value)
+        fetchAutocomplete(e.target.value)      // 자동완성 실행
+      }}
+      placeholder="스타벅스, 맛집, 카페 검색…"
+      className="w-full rounded-xl border px-3 py-2 text-sm"
+    />
+
+    {/* 로딩 표시 */}
+    {isSearching && (
+      <p className="mt-2 text-xs text-gray-500">검색 중…</p>
+    )}
+
+    {/* 검색 결과 리스트 */}
+    <div className="mt-2 max-h-60 overflow-y-auto">
+      {searchResults.map((p: any) => (
+        <div
+          key={p.placePrediction.placeId}
+          onClick={() => selectPlace(p.placePrediction.placeId)}
+          className="cursor-pointer rounded-lg px-3 py-2 hover:bg-gray-100 border-b"
+        >
+          <p className="text-sm font-medium">
+            {p.placePrediction.structuredFormat.mainText.text}
+          </p>
+          <p className="text-xs text-gray-500">
+            {p.placePrediction.structuredFormat.secondaryText?.text}
+          </p>
+        </div>
+      ))}
+    </div>
+
+    {/* 닫기 */}
+    <button
+      type="button"
+      onClick={() => setShowSearchBox(false)}
+      className="mt-3 text-xs text-gray-500"
+    >
+      닫기
+    </button>
+
+  </div>
+)}
+
         </div>
 
       </div>
