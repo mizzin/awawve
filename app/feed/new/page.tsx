@@ -93,44 +93,6 @@ const loadGoogleMaps = (apiKey?: string) =>
     document.head.appendChild(script)
   })
 
-const fetchAutocomplete = async (text: string) => {
-  if (!text.trim()) {
-    setSearchResults([])
-    return
-  }
-  setIsSearching(true)
-
-  const res = await fetch(`/api/maps/autocomplete?query=${text}`)
-  const data = await res.json()
-
-  if (data.ok) {
-    setSearchResults(data.predictions)
-  }
-
-  setIsSearching(false)
-}
-
-const selectPlace = async (placeId: string) => {
-  const res = await fetch(`/api/maps/detail?placeId=${placeId}`)
-  const data = await res.json()
-
-  if (data.ok && data.place) {
-    onSelect({
-      placeName: data.place.name,
-      address: data.place.address,
-      lat: data.place.lat,
-      lng: data.place.lng,
-      isCustom: false
-    })
-
-    setShowSearchBox(false)        // 검색창 닫기
-    setSearchQuery("")
-    setSearchResults([])
-  }
-}
-
-
-
 const compressImage = async (file: File, maxSize = 1280, quality = 0.82): Promise<File> => {
   const imageBitmap = await createImageBitmap(file)
   const { width, height } = imageBitmap
