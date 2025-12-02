@@ -17,9 +17,14 @@ type SearchModalProps = {
   onSelect: (location: SelectedLocation) => void
 }
 
-const fetchAutocomplete = async (text: string) => {
+const fetchAutocomplete = async (text: string, location?: { lat: number; lng: number }) => {
   if (!text.trim()) return { ok: false, predictions: [] }
-  const res = await fetch(`/api/maps/autocomplete?query=${encodeURIComponent(text)}`)
+  const params = new URLSearchParams({ query: text })
+  if (location) {
+    params.set("lat", String(location.lat))
+    params.set("lng", String(location.lng))
+  }
+  const res = await fetch(`/api/maps/autocomplete?${params.toString()}`)
   return res.json().catch(() => ({ ok: false, predictions: [] }))
 }
 
@@ -50,14 +55,14 @@ export default function SearchLocationModal({ isOpen, onClose, onSelect }: Searc
       return
     }
     setLoading(true)
-    const data = await fetchAutocomplete(value)
+    const data = await fetchAutocomplete(value, userLocation ?? undefined)
     if (data.ok) {
       setResults(data.predictions ?? [])
     } else {
       setResults([])
     }
     setLoading(false)
-  }, [])
+  }, [userLocation])
 
   const requestLocation = () => {
     setLocationPermissionAsked(true)

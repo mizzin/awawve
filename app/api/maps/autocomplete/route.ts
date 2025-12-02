@@ -5,6 +5,11 @@ export const dynamic = "force-dynamic"
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const query = searchParams.get("query")
+  const lat = searchParams.get("lat")
+  const lng = searchParams.get("lng")
+  const latNum = lat ? Number(lat) : null
+  const lngNum = lng ? Number(lng) : null
+  const hasLocation = Number.isFinite(latNum) && Number.isFinite(lngNum)
   const apiKey = process.env.GOOGLE_MAPS_API_KEY
 
   if (!apiKey || !query) {
@@ -12,6 +17,24 @@ export async function GET(req: Request) {
   }
 
   try {
+    const body: Record<string, unknown> = {
+      input: query,
+      languageCode: "ko",
+      regionCode: "PH"
+    }
+
+    if (hasLocation) {
+      body.locationBias = {
+        circle: {
+          center: {
+            latitude: latNum,
+            longitude: lngNum,
+          },
+          radius: 1000,
+        },
+      }
+    }
+
     const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
       method: "POST",
       headers: {
@@ -21,11 +44,7 @@ export async function GET(req: Request) {
         "X-Goog-FieldMask":
           "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat.mainText.text,suggestions.placePrediction.structuredFormat.secondaryText.text"
       },
-      body: JSON.stringify({
-        input: query,
-        languageCode: "ko",
-        regionCode: "PH"
-      }),
+      body: JSON.stringify(body),
     })
 
     const text = await res.text()
