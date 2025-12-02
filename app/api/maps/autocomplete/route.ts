@@ -14,8 +14,9 @@ export async function GET(req: Request) {
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
+      // v1 autocomplete returns `suggestions` -> `placePrediction` objects
       "X-Goog-FieldMask":
-        "predictions.placeId,predictions.structuredFormat.mainText.text,predictions.structuredFormat.secondaryText.text"
+        "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat.mainText.text,suggestions.placePrediction.structuredFormat.secondaryText.text"
     },
     body: JSON.stringify({
       input: query,
@@ -25,7 +26,10 @@ export async function GET(req: Request) {
   })
 
   const data = await res.json()
-console.log("autocomplete result:", data)
+  console.log("autocomplete result:", data)
 
-  return NextResponse.json({ ok: true, predictions: data.predictions ?? [] })
+  // Keep response shape as { predictions } for the UI, but map from v1 `suggestions`
+  const predictions = data.suggestions ?? data.predictions ?? []
+
+  return NextResponse.json({ ok: true, predictions })
 }
