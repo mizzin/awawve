@@ -378,6 +378,7 @@ export default function FeedDetailPage() {
 
   const formattedDate = useMemo(() => (post ? formatKoreanDate(post.created_at) : ""), [post])
   const isMine = post?.author.id && authUserId ? authUserId === post.author.id : false
+  const renderContent = useCallback((text: string) => linkifyText(text), [])
 
   const menuItems = isMine
     ? [
@@ -483,7 +484,9 @@ export default function FeedDetailPage() {
         )}
 
           <section className="mt-6 space-y-3">
-            <p className="text-lg leading-relaxed">{post.content}</p>
+            <p className="text-lg leading-relaxed whitespace-pre-wrap break-words">
+              {renderContent(post.content)}
+            </p>
           </section>
 
           {post.latitude !== null && post.longitude !== null && (
@@ -644,4 +647,26 @@ function useOnClickOutside(ref: MutableRefObject<HTMLElement | null>, handler: (
       document.removeEventListener("touchstart", listener)
     }
   }, [ref, handler])
+}
+
+function linkifyText(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+
+  return parts.map((part, index) => {
+    if (/^https?:\/\/\S+$/.test(part)) {
+      return (
+        <a
+          key={`url-${index}`}
+          href={part}
+          className="text-[var(--awave-button)] underline break-words"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {part}
+        </a>
+      )
+    }
+    return <span key={`text-${index}`}>{part}</span>
+  })
 }
