@@ -757,7 +757,7 @@ function MapModal({
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-base font-semibold text-[var(--awave-text)]">장소 추가</p>
-            <p className="text-xs text-[var(--awave-text-light)]">검색하거나 지도를 눌러 핀을 찍을 수 있어요.</p>
+            <p className="text-xs text-[var(--awave-text-light)]">지도를 눌러 핀을 찍을 수 있어요.</p>
           </div>
           <button
             type="button"
@@ -769,37 +769,7 @@ function MapModal({
           </button>
         </div>
 
-        <div className="relative pointer-events-none">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--awave-text-light)]" />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="장소를 검색해보세요"
-            className="pointer-events-auto w-full rounded-xl border-[var(--awave-border)] bg-[var(--awave-secondary)] pl-10 pr-4 text-sm text-[var(--awave-text)]"
-          />
-        </div>
-
         <div className="mt-5 space-y-3">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 rounded-xl border-[var(--awave-border)] bg-white py-4 text-sm font-medium text-[var(--awave-text)]"
-              onClick={() => setIsMapModalOpen(true)}
-              disabled={isLocked}
-            >
-              🗺️ 지도에서 선택하기
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 rounded-xl border-[var(--awave-border)] bg-white py-4 text-sm font-medium text-[var(--awave-text)]"
-              onClick={() => setIsSearchModalOpen(true)}
-              disabled={isLocked}
-            >
-              🔍 검색으로 선택하기
-            </Button>
-          </div>
           <div className="relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--awave-border)] bg-[var(--awave-secondary)]">
             <div ref={mapRef} className="absolute inset-0" />
             {!pinLocation && (
