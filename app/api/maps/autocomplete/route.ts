@@ -17,32 +17,40 @@ export async function GET(req: Request) {
   }
 
   try {
-    const body: Record<string, unknown> = {
-      input: query,
-      languageCode: "ko",
-      regionCode: "PH"
-    }
+    // If we have location, use searchText with locationRestriction (strict 1km filter).
+    const useSearchText = hasLocation
 
-    if (hasLocation) {
-      body.locationBias = {
-        circle: {
-          center: {
-            latitude: latNum,
-            longitude: lngNum,
+    const endpoint = useSearchText
+      ? "https://places.googleapis.com/v1/places:searchText"
+      : "https://places.googleapis.com/v1/places:autocomplete"
+
+    const fieldMask = useSearchText
+      ? "places.id,places.displayName,places.formattedAddress,places.location"
+      : "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat.mainText.text,suggestions.placePrediction.structuredFormat.secondaryText.text"
+
+    const body: Record<string, unknown> = useSearchText
+      ? {
+          textQuery: query,
+          languageCode: "ko",
+          locationRestriction: {
+            circle: {
+              center: { latitude: latNum, longitude: lngNum },
+              radius: 1000,
+            },
           },
-          radius: 1000,
-        },
-      }
-    }
+        }
+      : {
+          input: query,
+          languageCode: "ko",
+          regionCode: "PH",
+        }
 
-    const res = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
-        // v1 autocomplete returns `suggestions` -> `placePrediction` objects
-        "X-Goog-FieldMask":
-          "suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat.mainText.text,suggestions.placePrediction.structuredFormat.secondaryText.text"
+        "X-Goog-FieldMask": fieldMask,
       },
       body: JSON.stringify(body),
     })
@@ -62,8 +70,22 @@ export async function GET(req: Request) {
 
     const data = text ? JSON.parse(text) : {}
 
-    // Keep response shape as { predictions } for the UI, but map from v1 `suggestions`
-    const predictions = data.suggestions ?? data.predictions ?? []
+    // Keep response shape as { predictions } for the UI
+    const predictions = (() => {
+      if (useSearchText) {
+        const places = data.places ?? []
+        return places.map((p: any) => ({
+          placePrediction: {
+            placeId: p.id,
+            structuredFormat: {
+              mainText: { text: p.displayName?.text ?? "" },
+              secondaryText: { text: p.formattedAddress ?? "" },
+            },
+          },
+        }))
+      }
+      return data.suggestions ?? data.predictions ?? []
+    })()
 
     return NextResponse.json({ ok: true, predictions })
   } catch (err) {
