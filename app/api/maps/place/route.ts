@@ -7,7 +7,7 @@ export async function GET(req: Request) {
     const lng = searchParams.get("lng")
     const placeId = searchParams.get("placeId")
 
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY ?? process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY
     if (!apiKey) {
       return NextResponse.json({ ok: false, error: "Missing Google Maps API key" })
     }
@@ -16,12 +16,6 @@ export async function GET(req: Request) {
     // placeId 우선 처리: placeId가 있으면 디테일 조회
     // -------------------------------------------------------
     if (placeId) {
-      console.log("[DEBUG] Detail URL:", `https://places.googleapis.com/v1/places/${placeId}`)
-      console.log("[DEBUG] Detail Headers OK:", {
-        apiKey: Boolean(apiKey),
-        fieldMask: "id,displayName,formattedAddress,location",
-      })
-
       const detailRes = await fetch(
         `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
         {
@@ -33,9 +27,7 @@ export async function GET(req: Request) {
         }
       )
 
-      console.log("[DEBUG] Detail Status:", detailRes.status)
       const detailText = await detailRes.text()
-      console.log("[DEBUG] Detail RAW:", detailText)
 
       const detailJson = detailText ? JSON.parse(detailText) : {}
       if (!detailRes.ok || (detailJson.status && detailJson.status !== "OK" && !detailJson.id)) {

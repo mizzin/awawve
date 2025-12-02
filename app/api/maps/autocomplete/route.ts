@@ -5,9 +5,7 @@ export const dynamic = "force-dynamic"
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const query = searchParams.get("query")
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY ?? process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-
-  console.log("[autocomplete] incoming query:", query)
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY
 
   if (!apiKey || !query) {
     return NextResponse.json({ ok: false, predictions: [] })
@@ -31,7 +29,6 @@ export async function GET(req: Request) {
     })
 
     const text = await res.text()
-    console.log("[autocomplete] status:", res.status, "body:", text)
 
     if (!res.ok) {
       // Bubble up status/body for easier debugging in the browser console
