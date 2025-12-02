@@ -572,7 +572,6 @@ function MapModal({
   onSelect,
   isOpen,
 }: LocationModalProps) {
-  const [query, setQuery] = useState("")
   const [pinLocation, setPinLocation] = useState<SelectedLocation | null>(() =>
     selectedLocation?.isCustom ? selectedLocation : null
   )
@@ -803,66 +802,6 @@ function MapModal({
               </div>
             </div>
           )}
-          {/* 🔍 장소 검색 버튼 */}
-<button
-  type="button"
-  onClick={() => setShowSearchBox(true)}
-  className="w-full rounded-xl border px-4 py-3 text-left text-sm bg-[var(--awave-secondary)]">
-  🔍 장소 이름으로 검색하기
-</button>
-
-
-{/* 🔍 장소 검색 모달 UI */}
-{showSearchBox && (
-  <div className="mt-4 rounded-xl border bg-white p-4 shadow-md">
-    
-    {/* 검색 입력창 */}
-    <input
-      type="text"
-      value={searchQuery}
-      onChange={(e) => {
-        setSearchQuery(e.target.value)
-        fetchAutocomplete(e.target.value)      // 자동완성 실행
-      }}
-      placeholder="스타벅스, 맛집, 카페 검색…"
-      className="w-full rounded-xl border px-3 py-2 text-sm"
-    />
-
-    {/* 로딩 표시 */}
-    {isSearching && (
-      <p className="mt-2 text-xs text-gray-500">검색 중…</p>
-    )}
-
-    {/* 검색 결과 리스트 */}
-    <div className="mt-2 max-h-60 overflow-y-auto">
-      {searchResults.map((p: any) => (
-        <div
-          key={p.placePrediction.placeId}
-          onClick={() => selectPlace(p.placePrediction.placeId, onSelect)}
-          className="cursor-pointer rounded-lg px-3 py-2 hover:bg-gray-100 border-b"
-        >
-          <p className="text-sm font-medium">
-            {p.placePrediction.structuredFormat.mainText.text}
-          </p>
-          <p className="text-xs text-gray-500">
-            {p.placePrediction.structuredFormat.secondaryText?.text}
-          </p>
-        </div>
-      ))}
-    </div>
-
-    {/* 닫기 */}
-    <button
-      type="button"
-      onClick={() => setShowSearchBox(false)}
-      className="mt-3 text-xs text-gray-500"
-    >
-      닫기
-    </button>
-
-  </div>
-)}
-
         </div>
 
       </div>
