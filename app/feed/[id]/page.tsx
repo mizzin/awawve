@@ -386,6 +386,38 @@ export default function FeedDetailPage() {
   const renderContent = useCallback((text: string) => linkifyText(text), [])
   const categoryBadge = post?.category && post.category.trim().length > 0 ? post.category.trim() : null
 
+  const handleShare = useCallback(() => {
+    const fallbackBase = process.env.NEXT_PUBLIC_SITE_URL || ""
+    const url =
+      typeof window !== "undefined"
+        ? window.location.href
+        : `${fallbackBase.replace(/\/$/, "")}/feed/${post?.id ?? ""}`
+
+    const notify = (ok: boolean) =>
+      alert(ok ? "링크를 클립보드에 복사했어요." : "복사에 실패했습니다. 다시 시도해주세요.")
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(url)
+        .then(() => notify(true))
+        .catch(() => notify(false))
+      return
+    }
+
+    try {
+      const textarea = document.createElement("textarea")
+      textarea.value = url
+      document.body.appendChild(textarea)
+      textarea.select()
+      const success = document.execCommand("copy")
+      document.body.removeChild(textarea)
+      notify(success)
+    } catch (err) {
+      console.error("[share] copy fallback error", err)
+      notify(false)
+    }
+  }, [post?.id])
+
   const handleDelete = useCallback(async () => {
     if (!post?.id || deleting) return
     const confirmed = window.confirm("이 피드와 댓글/반응/이미지/주소 정보를 모두 삭제할까요?")
@@ -442,12 +474,12 @@ export default function FeedDetailPage() {
   const menuItems = isMine
     ? [
         { label: "수정", action: () => (post ? router.push(`/feed/${post.id}/edit`) : undefined) },
-        { label: "공유", action: () => alert("공유 기능은 준비 중입니다.") },
+        { label: "공유", action: () => handleShare() },
         { label: deleting ? "삭제 중..." : "삭제", action: () => void handleDelete(), disabled: deleting },
       ]
     : [
         { label: "신고", action: () => alert("신고가 접수되었습니다.") },
-        { label: "공유", action: () => alert("공유 기능은 준비 중입니다.") },
+        { label: "공유", action: () => handleShare() },
       ]
 
   useOnClickOutside(menuRef, closeMenu)
