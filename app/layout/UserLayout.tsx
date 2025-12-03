@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { MouseEvent, ReactNode } from "react"
-import { Bell, Home, PlusCircle, UserRound } from "lucide-react"
+import { Bell, Home, Info, PlusCircle, UserRound } from "lucide-react"
 import Image from "next/image"
 
 import { useUserAccess } from "@/lib/useUserAccess"
@@ -58,13 +58,22 @@ export default function UserLayout({ children, isLoggedIn, onRequireAuth, userId
             <Image src="/logo.png" alt="awave" width={96} height={32} className="h-7 w-auto" priority />
             <span className="text-sm text-[var(--awave-text-light)]">@beta</span>
           </Link>
-          <button
-            type="button"
-            aria-label="알림"
-            className="inline-flex items-center justify-center rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)]"
-          >
-            <Bell className="size-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/info"
+              aria-label="정보"
+              className="inline-flex items-center justify-center rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)]"
+            >
+              <Info className="size-5" />
+            </Link>
+            <button
+              type="button"
+              aria-label="알림"
+              className="inline-flex items-center justify-center rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)]"
+            >
+              <Bell className="size-5" />
+            </button>
+          </div>
         </div>
 
         {isLocked && (
