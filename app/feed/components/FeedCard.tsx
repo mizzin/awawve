@@ -168,18 +168,18 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-semibold text-[var(--awave-text)]">@{feed.author.nickname}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-[var(--awave-text)]">@{feed.author.nickname}</p>
+              {categoryBadge && (
+                <span className="inline-flex items-center justify-center rounded-full bg-[#E8F0FF]/90 px-2.5 py-1 text-[12px] font-medium leading-none text-[#3A5BC7]">
+                  {categoryBadge}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-[var(--awave-text-light)]">{dateLabel}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {categoryBadge && (
-            <span className="inline-flex h-6 items-center justify-center rounded-full bg-[var(--awave-button)] px-3 py-1 text-[12px] font-medium leading-none text-white">
-              {categoryBadge}
-            </span>
-          )}
-          <span className="text-lg text-[var(--awave-text-light)]/70">⋯</span>
-        </div>
+        <span className="text-lg text-[var(--awave-text-light)]/70">⋯</span>
       </header>
 
       {feed.imageUrl && (

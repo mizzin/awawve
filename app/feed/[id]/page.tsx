@@ -512,29 +512,31 @@ export default function FeedDetailPage() {
       <div className="min-h-screen bg-white text-[var(--awave-text)]">
         <main className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-32 pt-6">
           <section className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
-                <Image
-                  src={post.author.avatarUrl ?? generateAvatarSVG(post.author.nickname, 36)}
-                  alt={`${post.author.nickname} avatar`}
+        <div className="flex items-center gap-3">
+          <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
+            <Image
+              src={post.author.avatarUrl ?? generateAvatarSVG(post.author.nickname, 36)}
+              alt={`${post.author.nickname} avatar`}
                   fill
                   className="object-cover"
                   sizes="36px"
                   unoptimized
-                />
-              </div>
-              <div>
-                <p className="text-base font-semibold">@{post.author.nickname}</p>
-                <p className="text-xs text-[#999999]">{formattedDate}</p>
-              </div>
-              </div>
-
-            <div className="relative z-20 flex items-start gap-2" ref={menuRef}>
+            />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-base font-semibold">@{post.author.nickname}</p>
               {categoryBadge && (
-                <span className="inline-flex h-6 items-center justify-center rounded-full bg-[var(--awave-button)] px-3 py-1 text-[12px] font-medium leading-none text-white">
+                <span className="inline-flex items-center justify-center rounded-full bg-[#E8F0FF]/90 px-2.5 py-1 text-[12px] font-medium leading-none text-[#3A5BC7]">
                   {categoryBadge}
                 </span>
               )}
+            </div>
+            <p className="text-xs text-[#999999]">{formattedDate}</p>
+          </div>
+        </div>
+
+            <div className="relative z-20 flex items-center" ref={menuRef}>
               <button
                 type="button"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--awave-border)] text-[var(--awave-text-light)] transition hover:border-[var(--awave-button)]/30"
