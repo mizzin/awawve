@@ -34,7 +34,8 @@ export async function GET(req: Request) {
       ? {
           textQuery: query,
           languageCode: "ko",
-          locationRestriction: {
+          // searchText는 circle을 locationRestriction에서 허용하지 않음 → locationBias 사용
+          locationBias: {
             circle: {
               center: { latitude: latNum, longitude: lngNum },
               radius: 1000,
