@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { X } from "lucide-react"
 
 type SelectedLocation = {
+  placeId?: string
   placeName: string
   address: string
   lat: number
@@ -90,6 +91,7 @@ export default function SearchLocationModal({ isOpen, onClose, onSelect }: Searc
       const data = await fetchPlaceDetail(placeId)
       if (data.ok && data.place) {
         onSelect({
+          placeId: data.place.placeId,
           placeName: data.place.name,
           address: data.place.address,
           lat: data.place.lat,

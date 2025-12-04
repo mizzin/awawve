@@ -36,6 +36,8 @@ type FeedDetail = {
   }
   content: string
   imageUrl: string | null
+  placeId: string | null
+  placeName: string | null
   category: string | null
   address: string | null
   latitude: number | null
@@ -50,6 +52,8 @@ type FeedRow = {
   user_id: string | null
   content: string
   image_url: string | null
+  place_id: string | null
+  place_name: string | null
   category: string | null
   address: string | null
   latitude: number | null
@@ -197,7 +201,7 @@ export default function FeedDetailPage() {
       const { data, error: fetchError } = await supabase
         .from("feeds")
         .select(
-          "id, user_id, content, image_url, category, address, latitude, longitude, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
+          "id, user_id, content, image_url, place_id, place_name, category, address, latitude, longitude, created_at, users:users!feeds_user_id_fkey(id, nickname, profile_image)"
         )
         .eq("id", feedId)
         .or("is_deleted.is.null,is_deleted.eq.false")
@@ -227,12 +231,14 @@ export default function FeedDetailPage() {
           nickname,
           avatarUrl: joinedUser?.profile_image ?? null,
         },
-          content: data.content,
-          imageUrl: data.image_url,
-          category: data.category,
-          address: data.address,
-          latitude: data.latitude,
-          longitude: data.longitude,
+        content: data.content,
+        imageUrl: data.image_url,
+        placeId: data.place_id,
+        placeName: data.place_name,
+        category: data.category,
+        address: data.address,
+        latitude: data.latitude,
+        longitude: data.longitude,
         reactions: { like: 0, funny: 0, dislike: 0 },
         comments: [],
         created_at: data.created_at,
@@ -594,6 +600,9 @@ export default function FeedDetailPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-[var(--awave-text)]">위치</p>
+                  {post.placeName ? (
+                    <p className="text-sm font-semibold text-[var(--awave-text)]">{post.placeName}</p>
+                  ) : null}
                   {post.address ? (
                     <p className="text-xs text-[var(--awave-text-light)]">{post.address}</p>
                   ) : null}

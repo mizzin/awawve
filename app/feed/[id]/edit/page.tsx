@@ -16,6 +16,7 @@ const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
 const TASTE_TAGS = ["여행", "식당", "마트", "카페", "화장품", "자동차", "호텔"]
 
 type SelectedLocation = {
+  placeId?: string
   placeName: string
   address: string
   lat: number
@@ -28,6 +29,8 @@ type FeedRow = {
   user_id: string | null
   content: string
   image_url: string | null
+  place_id: string | null
+  place_name: string | null
   category: string | null
   address: string | null
   latitude: number | null
@@ -81,7 +84,7 @@ export default function EditFeedPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from("feeds")
-        .select("id, user_id, content, image_url, category, address, latitude, longitude, created_at")
+        .select("id, user_id, content, image_url, place_id, place_name, category, address, latitude, longitude, created_at")
         .eq("id", feedId)
         .maybeSingle<FeedRow>()
 
@@ -96,7 +99,8 @@ export default function EditFeedPage() {
       setSelectedTag(data.category ?? null)
       if (data.address && data.latitude !== null && data.longitude !== null) {
         const loc = {
-          placeName: data.address,
+          placeId: data.place_id ?? undefined,
+          placeName: data.place_name ?? data.address,
           address: data.address,
           lat: data.latitude,
           lng: data.longitude,
@@ -135,6 +139,8 @@ export default function EditFeedPage() {
       const updates = {
         content: body.trim(),
         category: selectedTag ?? null,
+        place_id: location?.placeId ?? null,
+        place_name: location?.placeName ?? null,
         address: location?.address ?? null,
         latitude: location?.lat ?? null,
         longitude: location?.lng ?? null,
@@ -358,6 +364,7 @@ export default function EditFeedPage() {
           onClose={() => setShowSearchModal(false)}
           onSelect={(loc) => {
             setLocation({
+              placeId: loc.placeId,
               placeName: loc.placeName,
               address: loc.address,
               lat: loc.lat,

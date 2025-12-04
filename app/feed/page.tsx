@@ -26,6 +26,8 @@ type FeedRow = {
   user_id: string | null
   content: string
   image_url: string | null
+  place_id: string | null
+  place_name: string | null
   category: string | null
   created_at: string
   nickname?: string | null
@@ -107,6 +109,8 @@ export default function FeedPage() {
           user_id,
           content,
           image_url,
+          place_id,
+          place_name,
           category,
           created_at,
           users:users!feeds_user_id_fkey(id, nickname, profile_image),
@@ -138,6 +142,8 @@ export default function FeedPage() {
           },
           content: item.content,
           imageUrl: item.image_url,
+          placeId: item.place_id,
+          placeName: item.place_name,
           category: item.category,
           createdAt: item.created_at,
           commentCount: item.feed_comments?.length ?? 0,

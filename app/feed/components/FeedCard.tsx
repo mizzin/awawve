@@ -35,6 +35,8 @@ export type FeedCardData = {
   }
   content: string
   imageUrl?: string | null
+  placeId?: string | null
+  placeName?: string | null
   category?: string | null
   createdAt: string
   commentCount?: number

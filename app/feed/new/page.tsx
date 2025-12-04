@@ -17,6 +17,7 @@ const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
 const TASTE_TAGS = ["여행", "식당", "마트", "카페", "화장품", "자동차", "호텔"]
 
 type SelectedLocation = {
+  placeId?: string
   placeName: string
   address: string
   lat: number
@@ -175,6 +176,8 @@ export default function NewFeedPage() {
         content: body.trim(),
         image_url: uploadedImageUrl,
         category: selectedTag ?? null,
+        place_id: location?.placeId ?? null,
+        place_name: location?.placeName ?? null,
         address: location?.address ?? null,
         latitude: location?.lat ?? null,
         longitude: location?.lng ?? null,
