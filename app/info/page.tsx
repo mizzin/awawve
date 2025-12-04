@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils"
 
 const TABS = [
   { key: "tab1", label: "story" },
-  { key: "tab2", label: "서비스 소식/정책" },
-  { key: "tab3", label: "버전 업데이트" },
+  { key: "tab2", label: "서비스 소식" },
+  { key: "tab3", label: "업데이트" },
 ]
 
 export default function InfoPage() {
