@@ -26,6 +26,7 @@ const fetchAutocomplete = async (text: string, location?: { lat: number; lng: nu
     params.set("lng", String(location.lng))
   }
   const res = await fetch(`/api/maps/autocomplete?${params.toString()}`)
+  console.log("[autocomplete][client] request params:", params.toString())
   return res.json().catch(() => ({ ok: false, predictions: [] }))
 }
 
@@ -57,6 +58,7 @@ export default function SearchLocationModal({ isOpen, onClose, onSelect }: Searc
     }
     setLoading(true)
     const data = await fetchAutocomplete(value, userLocation ?? undefined)
+    console.log("[autocomplete][client] response:", data)
     if (data.ok) {
       setResults(data.predictions ?? [])
     } else {

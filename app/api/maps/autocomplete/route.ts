@@ -17,6 +17,8 @@ export async function GET(req: Request) {
   }
 
   try {
+    console.log("[autocomplete][server] incoming:", { query, lat, lng })
+
     // If we have location, use searchText with locationRestriction (strict 1km filter).
     const useSearchText = hasLocation
 
@@ -56,6 +58,7 @@ export async function GET(req: Request) {
     })
 
     const text = await res.text()
+    console.log("[autocomplete][server] status:", res.status, "useSearchText:", useSearchText, "body:", text)
 
     if (!res.ok) {
       // Bubble up status/body for easier debugging in the browser console
