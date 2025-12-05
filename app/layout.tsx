@@ -17,14 +17,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.tryawave.com"),
   title: "awave | 새로운 파도를 만나보세요",
   description: "awave에서 취향과 순간을 공유하고 새로운 파도를 만나보세요.",
   openGraph: {
-    images: ["/op/awave-og.png"],
+    images: ["https://www.tryawave.com/op/awave-og.png"],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/op/awave-og.png"],
+    images: ["https://www.tryawave.com/op/awave-og.png"],
   },
   icons: {
     icon: "/favicon.svg",
