@@ -47,7 +47,8 @@
   --radius: 0.75rem;
   /* AWAVE brand tokens */
   --awave-brand: #1e2633;
-  --awave-button: #174484;
+  --awave-primary: #0d16b5;
+  --awave-button: #0d16b5;
   --awave-secondary: #f1f4f8;
   --awave-bg: #ffffff;
   --awave-surface: #f1f4f8;
