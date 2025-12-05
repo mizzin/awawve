@@ -83,7 +83,7 @@ export default function SignupPage() {
     });
   };
 
-  const preferenceOptions = ['여행', '식당', '마트', '카페', '화장품', '자동차', '호텔'];
+  const preferenceOptions = ['여행', '식당', '마트', '카페', '화장품', '자동차', '호텔', '취미', '주거', '행정', '생활팁'];
   const regionOptions = ['BGC', 'Ortigas', 'Makati', 'Quezon City', 'Pasay'];
 
   useEffect(() => {
