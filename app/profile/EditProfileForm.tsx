@@ -224,7 +224,7 @@ export function EditProfileForm({ user, onCancel, onSaved }: EditProfileFormProp
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="rounded-md bg-[#223044] px-3 py-2 text-sm font-semibold text-white shadow-none transition hover:bg-[#2f3d66] disabled:opacity-70"
+            className="rounded-md bg-[var(--awave-button)] px-3 py-2 text-sm font-semibold text-white shadow-none transition hover:bg-[var(--awave-button)]/90 disabled:opacity-70"
           >
             {saving ? "저장 중..." : "저장"}
           </Button>

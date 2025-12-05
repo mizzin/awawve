@@ -395,7 +395,7 @@ export default function NewFeedPage() {
                 className={cn(
                   "w-full rounded-xl py-6 text-base font-semibold shadow-lg transition",
                   canSubmit
-                    ? "bg-[#223044] text-white hover:bg-[#2f3d66]"
+                    ? "bg-[var(--awave-button)] text-white hover:bg-[var(--awave-button)]/90"
                     : "bg-[var(--awave-text-light)] text-white"
                 )}
               >
