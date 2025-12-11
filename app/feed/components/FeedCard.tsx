@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { generateAvatarSVG } from "@/lib/utils/avatar"
 
-type ReactionKey = "like" | "funny" | "dislike"
+export type ReactionKey = "like" | "funny" | "dislike"
 
 const reactionMeta: Record<
   ReactionKey,
@@ -51,12 +51,14 @@ type FeedCardProps = {
   feed: FeedCardData
   readOnly?: boolean
   onRequireAuth?: () => void
+  onReactionChange?: (feedId: string, next: ReactionKey | null, prev: ReactionKey | null) => Promise<boolean>
 }
 
-export default function FeedCard({ feed, readOnly = false, onRequireAuth }: FeedCardProps) {
+export default function FeedCard({ feed, readOnly = false, onRequireAuth, onReactionChange }: FeedCardProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [selectedReaction, setSelectedReaction] = useState<ReactionKey | null>(null)
+  const [reactionPending, setReactionPending] = useState(false)
   const storageKey = useMemo(() => `feed-reaction-${feed.id}`, [feed.id])
 
   const dateLabel = useMemo(() => {
@@ -125,24 +127,33 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
   )
 
   const handleReactionClick = useCallback(
-    (reaction: ReactionKey) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    (reaction: ReactionKey) => async (event: React.MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation()
       if (readOnly) {
         notifyAuthRequired()
         return
       }
-      setSelectedReaction((prev) => {
-        const next = prev === reaction ? null : reaction
+      if (reactionPending) return
+
+      const next = selectedReaction === reaction ? null : reaction
+
+      setReactionPending(true)
+      try {
+        const ok = onReactionChange ? await onReactionChange(feed.id, next, selectedReaction) : true
+        if (!ok) return
+
+        setSelectedReaction(next)
         toast({
           title: next ? `${reactionMeta[reaction].label} 반응을 남겼어요` : "반응을 취소했어요",
           duration: 1800,
           className:
             "rounded-xl border border-[var(--awave-border)] bg-white text-[var(--awave-text)] shadow-md",
         })
-        return next
-      })
+      } finally {
+        setReactionPending(false)
+      }
     },
-    [notifyAuthRequired, readOnly]
+    [feed.id, notifyAuthRequired, onReactionChange, readOnly, reactionPending, selectedReaction, toast]
   )
 
   const commentCount = feed.commentCount ?? 0
@@ -215,7 +226,7 @@ export default function FeedCard({ feed, readOnly = false, onRequireAuth }: Feed
               )}
               aria-pressed={selectedReaction === key}
               aria-label={reactionMeta[key].label}
-              disabled={readOnly}
+              disabled={readOnly || reactionPending}
               animate={selectedReaction === key ? wiggleAnimation : { rotate: 0 }}
               transition={wiggleTransition}
               whileTap={{ scale: 0.92 }}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 
 import UserLayout from "@/app/layout/UserLayout"
-import FeedCard, { type FeedCardData } from "@/app/feed/components/FeedCard"
+import FeedCard, { type FeedCardData, type ReactionKey } from "@/app/feed/components/FeedCard"
 import { Button } from "@/components/ui/button"
 import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
@@ -208,6 +208,97 @@ export default function FeedPage() {
     })
   }, [lockReason, toast])
 
+  const normalizeReactionKey = useCallback((key: ReactionKey | "meh"): ReactionKey => {
+    if (key === "meh") return "funny"
+    return key
+  }, [])
+
+  const handleReactionChange = useCallback(
+    async (feedId: string, next: ReactionKey | null, _prev: ReactionKey | null) => {
+      if (!sessionUser?.id) {
+        showAuthToast()
+        return false
+      }
+
+      const userId = sessionUser.id
+
+      const { data: existingRow, error: fetchError } = await supabase
+        .from("feed_reactions")
+        .select("id, reaction_type")
+        .eq("feed_id", feedId)
+        .eq("user_id", userId)
+        .maybeSingle<{ id: string; reaction_type: ReactionKey | "meh" }>()
+
+      if (fetchError) {
+        console.error("[feed reactions] fetch existing error", fetchError)
+        toast({
+          title: "반응 처리 중 문제가 발생했어요.",
+          duration: 2000,
+          className:
+            "rounded-xl border border-[var(--awave-border)] bg-white text-[var(--awave-text)] shadow-md",
+        })
+        return false
+      }
+
+      const existingType = existingRow ? normalizeReactionKey(existingRow.reaction_type) : null
+
+      try {
+        if (!existingRow && next) {
+          const { error } = await supabase.from("feed_reactions").insert({
+            feed_id: feedId,
+            user_id: userId,
+            reaction_type: next,
+          })
+          if (error) throw error
+        } else if (existingRow && existingType === next) {
+          const { error } = await supabase.from("feed_reactions").delete().eq("id", existingRow.id)
+          if (error) throw error
+        } else if (existingRow && next) {
+          const { error } = await supabase
+            .from("feed_reactions")
+            .update({ reaction_type: next, updated_at: new Date().toISOString() })
+            .eq("id", existingRow.id)
+
+          if (error) throw error
+        } else if (!existingRow && !next) {
+          return true
+        }
+      } catch (error) {
+        console.error("[feed reactions] mutation error", error)
+        toast({
+          title: "반응 처리 중 문제가 발생했어요.",
+          duration: 2000,
+          className:
+            "rounded-xl border border-[var(--awave-border)] bg-white text-[var(--awave-text)] shadow-md",
+        })
+        return false
+      }
+
+      const decrementKey = existingType
+      const incrementKey = existingType === next ? null : next
+
+      setFeeds((prevFeeds) =>
+        prevFeeds.map((feed) => {
+          if (feed.id !== feedId) return feed
+          const base = feed.reactions ?? { like: 0, funny: 0, dislike: 0 }
+          const updated = { ...base }
+
+          if (decrementKey) {
+            updated[decrementKey] = Math.max(0, (updated[decrementKey] ?? 0) - 1)
+          }
+          if (incrementKey) {
+            updated[incrementKey] = (updated[incrementKey] ?? 0) + 1
+          }
+
+          return { ...feed, reactions: updated }
+        })
+      )
+
+      return true
+    },
+    [sessionUser?.id, showAuthToast, toast, normalizeReactionKey]
+  )
+
   const handleWriteClick = useCallback(() => {
     if (isLocked) {
       showLockedToast()
@@ -255,6 +346,7 @@ export default function FeedPage() {
                 feed={feed}
                 readOnly={!isLoggedIn}
                 onRequireAuth={isLocked ? showLockedToast : showAuthToast}
+                onReactionChange={handleReactionChange}
               />
             ))
           ) : (

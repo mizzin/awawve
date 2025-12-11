@@ -10,6 +10,8 @@ import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useStat
 import UserLayout from "@/app/layout/UserLayout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { generateAvatarSVG } from "@/lib/utils/avatar"
 import { supabase } from "@/lib/supabaseClient"
@@ -115,6 +117,7 @@ export default function FeedDetailPage() {
   const params = useParams()
   const feedId = Array.isArray(params.id) ? params.id[0] : params.id
   const router = useRouter()
+  const { toast } = useToast()
   const [post, setPost] = useState<FeedDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -132,7 +135,12 @@ export default function FeedDetailPage() {
   const [commentSubmitting, setCommentSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [reactions, setReactions] = useState<ReactionRow[]>([])
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportReason, setReportReason] = useState("스팸/광고")
+  const [reportDetail, setReportDetail] = useState("")
+  const [reportSubmitting, setReportSubmitting] = useState(false)
   const FEED_IMAGE_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_FEED_BUCKET
+  const reportReasons = ["스팸/광고", "음란물·불법촬영물", "혐오/차별", "사칭/개인정보 노출", "폭력/자해", "불법 행위 조장", "기타"]
 
   const menuRef = useRef<HTMLDivElement | null>(null)
   const closeMenu = useCallback(() => setMenuOpen(false), [])
@@ -477,6 +485,51 @@ export default function FeedDetailPage() {
     router.push("/feed")
   }, [post?.id, post?.imageUrl, deleting, isMine, router, FEED_IMAGE_BUCKET])
 
+  const handleReportSubmit = useCallback(async () => {
+    if (!post) return
+    setReportSubmitting(true)
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) {
+      alert("로그인 후 신고할 수 있습니다.")
+      setReportSubmitting(false)
+      return
+    }
+
+    const payload = {
+      reporter_id: userData.user.id,
+      target_type: "feed",
+      target_id: post.id,
+      reason: reportReason,
+      detail: reportDetail.trim() || null,
+    }
+
+    const { error } = await supabase.from("reports").insert(payload)
+    setReportSubmitting(false)
+
+    if (error) {
+      console.error("[report] insert error", error)
+      toast({
+        title: "신고 접수에 실패했습니다.",
+        description: "잠시 후 다시 시도해주세요.",
+        duration: 2500,
+        className:
+          "rounded-xl border border-[var(--awave-border)] bg-white text-[var(--awave-text)] shadow-md",
+      })
+      return
+    }
+
+    setReportOpen(false)
+    setReportDetail("")
+    setReportReason("스팸/광고")
+    toast({
+      title: "신고가 접수되었습니다.",
+      description: "운영자가 확인할 때까지 숨김 처리될 수 있습니다.",
+      duration: 2500,
+      className:
+        "rounded-xl border border-[var(--awave-border)] bg-white text-[var(--awave-text)] shadow-md",
+    })
+  }, [post, reportDetail, reportReason, toast])
+
   const menuItems = isMine
     ? [
         { label: "수정", action: () => (post ? router.push(`/feed/${post.id}/edit`) : undefined) },
@@ -484,7 +537,7 @@ export default function FeedDetailPage() {
         { label: deleting ? "삭제 중..." : "삭제", action: () => void handleDelete(), disabled: deleting },
       ]
     : [
-        { label: "신고", action: () => alert("신고가 접수되었습니다.") },
+        { label: "신고", action: () => setReportOpen(true) },
         { label: "공유", action: () => handleShare() },
       ]
 
@@ -517,6 +570,54 @@ export default function FeedDetailPage() {
     <UserLayout>
       <div className="min-h-screen bg-white text-[var(--awave-text)]">
         <main className="mx-auto flex min-h-screen max-w-xl flex-col px-4 pb-32 pt-6">
+          {reportOpen && (
+            <div className="fixed inset-0 z-20 flex items-center justify-center bg-black/30 px-4">
+              <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
+                <h2 className="text-base font-semibold text-[var(--awave-text)]">게시물 신고</h2>
+                <p className="mt-1 text-xs text-[var(--awave-text-light)]">사유를 선택하고 필요한 경우 상세히 적어주세요.</p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {reportReasons.map((reason) => {
+                      const selected = reportReason === reason
+                      return (
+                        <button
+                          key={reason}
+                          type="button"
+                          onClick={() => setReportReason(reason)}
+                          className={cn(
+                            "rounded-full border px-3 py-1 text-xs transition",
+                            selected
+                              ? "border-[var(--awave-button)] bg-[var(--awave-button)]/10 text-[var(--awave-button)]"
+                              : "border-[var(--awave-border)] text-[var(--awave-text)] hover:bg-[var(--awave-secondary)]"
+                          )}
+                        >
+                          {reason}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-[var(--awave-text)]">상세 내용 (선택)</label>
+                    <Textarea
+                      value={reportDetail}
+                      onChange={(e) => setReportDetail(e.target.value)}
+                      placeholder="신고 사유를 구체적으로 적어주세요."
+                      className="text-sm"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setReportOpen(false)} disabled={reportSubmitting}>
+                    닫기
+                  </Button>
+                  <Button size="sm" onClick={() => void handleReportSubmit()} disabled={reportSubmitting}>
+                    {reportSubmitting ? "신고 중..." : "신고 제출"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           <section className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[var(--awave-secondary)]">
