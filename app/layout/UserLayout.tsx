@@ -66,13 +66,14 @@ export default function UserLayout({ children, isLoggedIn, onRequireAuth, userId
             >
               <Info className="size-5" />
             </Link>
-            <button
-              type="button"
+            <Link
+              href="/notifications"
               aria-label="알림"
+              onClick={(event) => handleNavClick(event, "/notifications")}
               className="inline-flex items-center justify-center rounded-full p-1 text-[var(--awave-text-light)] transition hover:text-[var(--awave-text)]"
             >
               <Bell className="size-5" />
-            </button>
+            </Link>
           </div>
         </div>
 

@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { generateAvatarSVG } from "@/lib/utils/avatar"
 import { supabase } from "@/lib/supabaseClient"
+import { buildCommentMessage, buildReactionMessage, createOrUpdateNotification, deleteReactionNotification } from "@/lib/notifications"
 
 type ReactionKey = "like" | "funny" | "dislike"
 
@@ -322,6 +323,13 @@ export default function FeedDetailPage() {
           console.error("[reaction] insert error", error)
         } else {
           console.info("[reaction] inserted", key)
+          void createOrUpdateNotification({
+            userId: post?.author.id ?? null,
+            fromUserId: userData.user.id,
+            type: "reaction",
+            referenceId: feedId,
+            message: buildReactionMessage(key),
+          })
         }
       } else if (existing.reaction_type === key) {
         const { error } = await supabase.from("feed_reactions").delete().eq("id", existing.id)
@@ -329,6 +337,11 @@ export default function FeedDetailPage() {
           console.error("[reaction] delete error", error)
         } else {
           console.info("[reaction] deleted", key)
+          void deleteReactionNotification({
+            userId: post?.author.id ?? null,
+            fromUserId: userData.user.id,
+            referenceId: feedId,
+          })
         }
       } else {
         const { error } = await supabase
@@ -340,6 +353,13 @@ export default function FeedDetailPage() {
           console.error("[reaction] update error", error)
         } else {
           console.info("[reaction] updated", existing.reaction_type, "->", key)
+          void createOrUpdateNotification({
+            userId: post?.author.id ?? null,
+            fromUserId: userData.user.id,
+            type: "reaction",
+            referenceId: feedId,
+            message: buildReactionMessage(key),
+          })
         }
       }
 
@@ -390,6 +410,13 @@ export default function FeedDetailPage() {
     if (data) {
       setComments((prev) => [...prev, mapCommentRow(data as CommentRow)])
       setCommentInput("")
+      void createOrUpdateNotification({
+        userId: post?.author.id ?? null,
+        fromUserId: userData.user.id,
+        type: "comment",
+        referenceId: post.id,
+        message: buildCommentMessage(text),
+      })
     }
 
     setCommentSubmitting(false)

@@ -11,6 +11,7 @@ import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/lib/supabaseClient"
 import { cn } from "@/lib/utils"
+import { buildReactionMessage, createOrUpdateNotification, deleteReactionNotification } from "@/lib/notifications"
 
 const TOAST_MESSAGES = ["로그인 후 파도에 함께 타보세요 🌊", "회원가입 후 좀 더 즐겨보세요 🌊"] as const
 
@@ -221,6 +222,8 @@ export default function FeedPage() {
       }
 
       const userId = sessionUser.id
+      const targetFeed = feeds.find((feed) => feed.id === feedId)
+      const targetUserId = targetFeed?.author.id ?? null
 
       const { data: existingRow, error: fetchError } = await supabase
         .from("feed_reactions")
@@ -274,6 +277,28 @@ export default function FeedPage() {
         return false
       }
 
+      try {
+        if (targetUserId) {
+          if (!next || (existingRow && existingType === next)) {
+            await deleteReactionNotification({
+              userId: targetUserId,
+              fromUserId: userId,
+              referenceId: feedId,
+            })
+          } else {
+            await createOrUpdateNotification({
+              userId: targetUserId,
+              fromUserId: userId,
+              type: "reaction",
+              referenceId: feedId,
+              message: buildReactionMessage(next),
+            })
+          }
+        }
+      } catch (notificationError) {
+        console.error("[feed reactions] notification error", notificationError)
+      }
+
       const decrementKey = existingType
       const incrementKey = existingType === next ? null : next
 
@@ -296,7 +321,7 @@ export default function FeedPage() {
 
       return true
     },
-    [sessionUser?.id, showAuthToast, toast, normalizeReactionKey]
+    [sessionUser?.id, showAuthToast, toast, normalizeReactionKey, feeds]
   )
 
   const handleWriteClick = useCallback(() => {
