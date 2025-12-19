@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Admin mock API (NEXT_PUBLIC_MOCK_API)
+
+관리자 페이지(`/catAridogJJa-admin/*`)는 mock API가 필요합니다.
+
+1. 로컬에서 실행하기  
+   `npm run mock-server` (db.json을 json-server로 4000 포트에서 제공)
+
+2. 운영에서 사용하기  
+   - db.json을 포함한 간단한 json-server를 호스팅(예: Render, Railway 등)  
+   - 환경 변수 `NEXT_PUBLIC_MOCK_API`를 해당 호스트 URL로 설정 후 배포  
+   - 예) `https://your-mock-host.onrender.com`

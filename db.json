@@ -1,8 +1,91 @@
 {
-  "users": [],
-  "feeds": [],
-  "comments": [],
-  "reports": [],
-  "sanctions": [],
-  "notes": []
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@awave.com",
+      "nickname": "운영자",
+      "accountState": "active",
+      "lockReason": null,
+      "joinedAt": "2024-01-01",
+      "lastActive": "2024-02-01",
+      "status": "정상",
+      "posts": 3,
+      "comments": 5,
+      "reports": 0,
+      "level": 2
+    },
+    {
+      "id": 2,
+      "email": "user@awave.com",
+      "nickname": "awave_user",
+      "accountState": "active",
+      "lockReason": null,
+      "joinedAt": "2024-01-05",
+      "lastActive": "2024-02-02",
+      "status": "정상",
+      "posts": 2,
+      "comments": 4,
+      "reports": 1,
+      "level": 1
+    }
+  ],
+  "feeds": [
+    {
+      "id": 1,
+      "authorId": 2,
+      "author": "awave_user",
+      "content": "BGC 근처 괜찮은 카페 추천해요",
+      "createdAt": "2024-02-01T09:00:00Z",
+      "visibility": "visible"
+    },
+    {
+      "id": 2,
+      "authorId": 1,
+      "author": "운영자",
+      "content": "시스템 점검 안내",
+      "createdAt": "2024-02-02T11:00:00Z",
+      "visibility": "hidden"
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "feedId": 1,
+      "userId": 1,
+      "content": "오르티가스에 새로 생긴 카페 괜찮아요!",
+      "createdAt": "2024-02-01T10:00:00Z",
+      "status": "visible"
+    }
+  ],
+  "reports": [
+    {
+      "id": 1,
+      "type": "글 신고",
+      "reason": "광고성 게시물",
+      "target": "feed #1",
+      "targetUserId": 2,
+      "reporter": "user2",
+      "createdAt": "2024-02-02T12:00:00Z",
+      "status": "대기"
+    }
+  ],
+  "sanctions": [
+    {
+      "id": 1,
+      "userId": 2,
+      "type": "restrict",
+      "reason": "반복 신고로 인한 제한",
+      "issuedAt": "2024-02-02T13:00:00Z",
+      "until": null
+    }
+  ],
+  "notes": [
+    {
+      "id": 1,
+      "userId": 2,
+      "body": "광고성 게시물 주의 요청 메모",
+      "author": "운영자",
+      "createdAt": "2024-02-02T14:00:00Z"
+    }
+  ]
 }
