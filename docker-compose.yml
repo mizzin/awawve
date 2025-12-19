@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: awave
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
@@ -23,12 +23,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/awave
-      JWT_SECRET: change-me-secret
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@db:5432/awave
+      JWT_SECRET: ${JWT_SECRET}
       NOTIFICATION_ORIGIN: "*"
     ports:
       - "3001:3001"
 
 volumes:
   db_data:
-

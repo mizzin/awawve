@@ -29,6 +29,7 @@ const AUTH_MESSAGES = ["로그인 후 이용해 주세요 🌊", "회원가입 �
 export type FeedCardData = {
   id: string
   author: {
+    id?: string
     nickname: string
     handle?: string
     avatarUrl?: string | null
