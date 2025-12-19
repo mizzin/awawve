@@ -5,9 +5,21 @@ import { AlertTriangle, CheckCircle2, Filter, Loader2, ShieldOff } from "lucide-
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { mockApi, type ReportRow, type ReportType } from "@/lib/mockApi"
+import { supabase } from "@/lib/supabaseClient"
 
 type ActionKey = "delete" | "sanction" | "dismiss"
+
+export type ReportType = "글 신고" | "댓글 신고" | "사용자 신고"
+
+export type ReportRow = {
+  id: string
+  type: ReportType
+  reason: string
+  target: string
+  reporter: string
+  status: "대기" | "처리" | "무혐의"
+  targetUserId: string
+}
 
 const actionMeta: Record<
   ActionKey,
@@ -41,15 +53,32 @@ export default function AdminReportPage() {
   const [typeFilter, setTypeFilter] = useState<ReportType | "전체">("전체")
   const [reports, setReports] = useState<ReportRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [mutatingId, setMutatingId] = useState<number | null>(null)
+  const [mutatingId, setMutatingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchReports() {
       setLoading(true)
       try {
-        const data = await mockApi.getReports()
-        setReports(data)
+        const { data, error } = await supabase
+          .from("reports")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        if (error) throw error
+
+        // DB 컬럼(snake_case)을 UI 타입(camelCase)으로 매핑
+        const mapped: ReportRow[] = (data || []).map((row) => ({
+          id: row.id,
+          type: row.type,
+          reason: row.reason,
+          target: row.target,
+          reporter: row.reporter,
+          status: row.status,
+          targetUserId: row.target_user_id, // DB 컬럼명이 target_user_id라고 가정
+        }))
+
+        setReports(mapped)
         setError(null)
       } catch (err) {
         const message = err instanceof Error ? err.message : "신고 목록을 불러오지 못했어요."
@@ -81,14 +110,28 @@ export default function AdminReportPage() {
     setMutatingId(report.id)
 
     try {
-      const updatedReport = await mockApi.updateReportStatus(report.id, action.nextStatus)
+      // 1. 신고 상태 업데이트
+      const { error: updateError } = await supabase
+        .from("reports")
+        .update({ status: action.nextStatus })
+        .eq("id", report.id)
+
+      if (updateError) throw updateError
+
+      // 2. 사용자 제재(Lock) 처리
       if (action.lockUser) {
-        await mockApi.setUserLock(report.targetUserId, "locked", action.lockReason ?? "신고 처리 중입니다.")
+        await supabase
+          .from("users")
+          .update({ status: "locked", lock_reason: action.lockReason ?? "신고 처리 중입니다." })
+          .eq("id", report.targetUserId)
       } else {
-        await mockApi.setUserLock(report.targetUserId, "active", null)
+        await supabase.from("users").update({ status: "active", lock_reason: null }).eq("id", report.targetUserId)
       }
 
-      setReports((prev) => prev.map((item) => (item.id === report.id ? updatedReport : item)))
+      // 3. 로컬 상태 업데이트
+      setReports((prev) =>
+        prev.map((item) => (item.id === report.id ? { ...item, status: action.nextStatus } : item))
+      )
       setError(null)
     } catch (err) {
       const message = err instanceof Error ? err.message : "신고 처리에 실패했습니다."

@@ -1,4 +1,6 @@
-const MOCK_BASE_URL = process.env.NEXT_PUBLIC_MOCK_API
+// Default to the local json-server in development so admins can try the mock UI without extra setup.
+const MOCK_BASE_URL =
+  process.env.NEXT_PUBLIC_MOCK_API ?? (process.env.NODE_ENV === "development" ? "http://localhost:4000" : undefined)
 
 export const mockApiAvailable = Boolean(MOCK_BASE_URL)
 
